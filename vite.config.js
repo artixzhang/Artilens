@@ -8,6 +8,7 @@ export default defineConfig({
   server: {
     host: '0.0.0.0',
     port: 5555,
+    allowedHosts: ['organ.local'],
     proxy: {
       '/api': {
         target: 'http://localhost:3000',

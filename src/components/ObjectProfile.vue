@@ -12,6 +12,10 @@
         <div class="badge-capsule type" :class="getTypeClass(obj.type)">
           <span>{{ obj.type }}</span>
         </div>
+        <!-- ID Badge (admin only) -->
+        <div v-if="mode === 'admin'" class="badge-capsule id-badge">
+          <span>{{ obj.id }}</span>
+        </div>
       </div>
 
       <!-- Pinned Badge (Top Right) -->
@@ -25,6 +29,12 @@
         <button class="traffic-btn close" @click="$emit('delete', obj.id)">
           <svg viewBox="0 0 24 24"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
         </button>
+      </div>
+
+      <!-- Admin View Count -->
+      <div v-if="mode === 'admin'" class="view-counter">
+        <svg viewBox="0 0 24 24"><path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/></svg>
+        <span>{{ obj.views || 0 }}</span>
       </div>
     </div>
 
@@ -47,7 +57,7 @@
 </template>
 
 <script setup>
-import MiniTag from './MiniTag.vue' // 引入组件
+import MiniTag from './MiniTag.vue'
 
 const props = defineProps({
   obj: { type: Object, required: true },
@@ -86,7 +96,6 @@ const getTypeClass = (type) => {
   color: white; font-size: 12px; font-weight: 600; text-transform: uppercase;
   border: 1px solid rgba(255, 255, 255, 0.4);
   box-shadow: 0 0 10px rgba(0,0,0,0.1);
-  /* 优化垂直居中方案 */
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -107,6 +116,12 @@ const getTypeClass = (type) => {
 .badge-capsule.type.blue-bg { background: rgba(0, 122, 255, 0.6); }
 .badge-capsule.type.orange-bg { background: rgba(255, 149, 0, 0.6); }
 
+/* object id */
+.badge-capsule.id-badge {
+  background: rgba(120, 120, 120, 0.6);
+  letter-spacing: 0.5px;
+}
+
 .admin-traffic-lights {
   position: absolute; top: 15px; right: 15px;
   display: flex; gap: 8px; z-index: 10;
@@ -122,6 +137,18 @@ const getTypeClass = (type) => {
 .traffic-btn.edit { background: #ffcc00; }
 .traffic-btn.close { background: #ff453a; }
 .traffic-btn.close svg { fill: rgba(50,0,0,0.6); }
+
+.view-counter {
+  position: absolute; bottom: 15px; left: 15px;
+  background: rgba(0, 0, 0, 0.6); backdrop-filter: blur(8px);
+  padding: 4px 10px; border-radius: 20px;
+  display: flex; align-items: center; gap: 6px;
+  color: rgba(255, 255, 255, 0.9); font-size: 12px; font-weight: 600;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  z-index: 10; pointer-events: none;
+}
+.view-counter svg { width: 14px; height: 14px; fill: currentColor; display: block; }
+.view-counter span { line-height: 1; padding-bottom: 2px; }
 
 .card-footer { padding: 8px 16px 16px 16px; }
 .title { font-weight: 600; font-size: 22px; margin-bottom: 12px; margin-top: 0px; color: #1d1d1f; }

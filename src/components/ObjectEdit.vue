@@ -234,6 +234,8 @@ const emit = defineEmits(['update:modelValue', 'close', 'save', 'upload', 'creat
 const initObj = JSON.parse(JSON.stringify(props.modelValue))
 if (!initObj.cardImages) initObj.cardImages = []
 if (!initObj.user) initObj.user = {}
+// make sure tags is always an array so computed filters don't blow up
+if (!Array.isArray(initObj.tags)) initObj.tags = []
 const localObj = ref(initObj)
 const isDragging = ref(false) 
 
@@ -320,6 +322,7 @@ watch(() => props.modelValue, (newVal) => {
   const copy = JSON.parse(JSON.stringify(newVal))
   if (!copy.cardImages) copy.cardImages = []
   if (!copy.user) copy.user = {}
+  if (!Array.isArray(copy.tags)) copy.tags = []
   localObj.value = copy
 }, { deep: true })
 
@@ -389,6 +392,11 @@ const handleDeleteClick = async (file) => {
 const editTagInput = ref('')
 const showEditTagSuggestions = ref(false)
 const getTagName = (id) => props.allTags.find(t => t.id === id)?.name || id
+
+// show suggestions whenever input has some content
+watch(editTagInput, (val) => {
+  showEditTagSuggestions.value = val.trim().length > 0
+})
 
 const editTagSuggestions = computed(() => {
   const q = editTagInput.value.trim().toLowerCase()
@@ -461,6 +469,7 @@ const save = () => {
 
 /* Tags */
 .modern-tag-container { background: #fff; border: 1px solid #e0e0e0; border-radius: 12px; padding: 8px; min-height: 50px; }
+.input-wrapper { position: relative; }
 .selected-zone { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 5px; }
 .pill-removable { background: #eef2ff; color: #4f46e5; border: 1px solid #c7d2fe; padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: 600; display: inline-flex; align-items: center; gap: 5px; }
 .remove-icon { cursor: pointer; opacity: 0.6; } .remove-icon:hover { opacity: 1; }

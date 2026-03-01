@@ -7,8 +7,15 @@ import pinnedRoutes from './routes/pinned.js';
 import userRoutes from './routes/users.js';
 import { DATA_PATH } from './config.js';
 import { loginUser, verifyToken } from './auth.js';
+import rateLimit from 'express-rate-limit';
 
 const app = express();
+
+const loginLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000, 
+    max: 10,
+    message: { success: false, message: "Too many login attempts, please try again later." }
+});
 
 if (!fs.existsSync(DATA_PATH)) {
     console.error(`\n[Data] : Data Directory Not Found: ${DATA_PATH}`);
@@ -19,8 +26,7 @@ if (!fs.existsSync(DATA_PATH)) {
 app.use(cors());
 app.use(express.json());
 
-// 2. 添加登录接口
-app.post('/api/login', (req, res) => {
+app.post('/api/login', loginLimiter, (req, res) => {
     const { username, password } = req.body;
     const result = loginUser(username, password);
     if (result.success) {
@@ -30,7 +36,6 @@ app.post('/api/login', (req, res) => {
     }
 });
 
-// 🔥 新增：Token 验证接口
 app.get('/api/check-auth', verifyToken, (req, res) => {
     res.json({ success: true, user: req.user });
 });

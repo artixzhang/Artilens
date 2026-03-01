@@ -116,6 +116,7 @@ export const getAllObjectsFromFiles = () => {
                 visibility: existingConfig.visibility || "public",
                 user: cleanedUserPermissions,
                 description: existingConfig.description || "",
+                views: existingConfig.views || 0, // Add views field
                 // Assets Attributes
                 basePath: `/api/static/objects/${folderName}/`, 
                 coverImage: existingConfig.coverImage || "", 

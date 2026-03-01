@@ -8,7 +8,7 @@
     >
       <div class="chevron-icon-wrapper">
         <div class="chevron-icon-mask"
-          :style="{ maskImage: `url(/api/static/site/chevron.up.svg)`, WebkitMaskImage: `url(/api/static/site/chevron.up.svg)` }">
+          :style="{ maskImage: `url(/api/static/site/icons/chevron.up.svg)`, WebkitMaskImage: `url(/api/static/site/icons/chevron.up.svg)` }">
         </div>
       </div>
     </div>
@@ -44,7 +44,7 @@ onUnmounted(() => {
 
 <style scoped>
 .back-top {
-  z-index: 900;
+  z-index: 1001;
   
   width: 50px;
   height: 50px;

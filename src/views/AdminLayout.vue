@@ -56,7 +56,7 @@ import PageFooter from '../components/PageFooter.vue'
   padding: 8px 20px;
   text-decoration: none;
   color: #666;
-  border-radius: 4px;
+  border-radius: 12px;
   transition: all 0.3s;
 }
 

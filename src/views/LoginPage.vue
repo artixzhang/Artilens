@@ -10,14 +10,14 @@
           type="text" 
           v-model="username" 
           placeholder="Username" 
-          @keyup.enter="handleLogin"
+          @keydown.enter="e => !e.isComposing && handleLogin()"
           class="login-input"
         />
         <input 
           type="password" 
           v-model="password" 
           placeholder="Password" 
-          @keyup.enter="handleLogin"
+          @keydown.enter="e => !e.isComposing && handleLogin()"
           ref="passwordInput"
           class="login-input"
         />

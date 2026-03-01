@@ -238,6 +238,14 @@ router.get('/:id', verifyTokenOptional, async (req, res) => {
             return res.status(403).json({ success: false, message: "Permission denied" });
         }
 
+        // Increment View Count
+        config.views = (config.views || 0) + 1;
+        try {
+            fs.writeFileSync(configPath, yaml.dump(config));
+        } catch (err) {
+            console.error(`[Objects] Failed to update views for ${id}:`, err);
+        }
+
         // 读取 Markdown
         let markdown = "";
         if (fs.existsSync(mdPath)) {

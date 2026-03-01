@@ -3,7 +3,7 @@
         <transition name="bg-fade">
             <DynamicWave v-if="!hasActiveFilter"></DynamicWave>
         </transition>
-        
+
         <div class="fixed-header-wrapper">
             
             <!-- Top Row -->
@@ -23,7 +23,7 @@
                     <div class="search-content-box">
                         <div class="search-input-capsule">
                             <div class="search-icon-mask"
-                                :style="{ maskImage: `url(/api/static/site/magnifyingglass.svg)`, WebkitMaskImage: `url(/api/static/site/magnifyingglass.svg)` }">
+                                :style="{ maskImage: `url(/api/static/site/icons/magnifyingglass.svg)`, WebkitMaskImage: `url(/api/static/site/icons/magnifyingglass.svg)` }">
                             </div>
                             <input 
                                 v-model="searchQuery" 
@@ -36,7 +36,7 @@
                             <transition name="fade">
                                 <div v-if="searchQuery" class="clear-icon-wrapper" @click="searchQuery = ''">
                                     <div class="x-icon-mask"
-                                        :style="{ maskImage: `url(/api/static/site/xmark.svg)`, WebkitMaskImage: `url(/api/static/site/xmark.svg)` }">
+                                        :style="{ maskImage: `url(/api/static/site/icons/xmark.svg)`, WebkitMaskImage: `url(/api/static/site/icons/xmark.svg)` }">
                                     </div>
                                 </div>
                             </transition>
@@ -73,7 +73,7 @@
                                 <line x1="3.6" y1="15" x2="19.6" y2="15" stroke="currentColor" stroke-width="1" stroke-linecap="round" />
                             </svg> -->
                             <div class="hash-icon-mask"
-                                :style="{ maskImage: `url(/api/static/site/number.svg)`, WebkitMaskImage: `url(/api/static/site/number.svg)` }">
+                                :style="{ maskImage: `url(/api/static/site/icons/number.svg)`, WebkitMaskImage: `url(/api/static/site/icons/number.svg)` }">
                             </div>
                         </div>
 
@@ -131,7 +131,16 @@
             </section>
         </div>
 
-        <div class="corner-stack"><BackTop/></div>
+        <div class="corner-stack">
+            <BackTop/>
+            <transition name="fade">
+                <SortControl 
+                    v-if="filteredObjects.length > 0" 
+                    v-model="sortState" 
+                    class="corner-sort-control" 
+                />
+            </transition>
+        </div>
         
         <!-- Edit Modal -->
         <ObjectEdit
@@ -160,6 +169,7 @@ import PageFooter from '../components/PageFooter.vue'
 import { NAV_HEIGHT } from '../config/constants'
 import BackTop from '../components/BackTop.vue'
 import DynamicWave from '../components/DynamicWave.vue'
+import SortControl from '../components/SortControl.vue' // Import SortControl
 
 const props = defineProps(['mode']) 
 const router = useRouter()
@@ -176,6 +186,7 @@ const isInputFocused = ref(false)
 const isHoveringSearch = ref(false)
 const editingObj = ref(null)
 const projectAssets = ref([])
+const sortState = ref({ field: 'date', order: 'desc' }) // Add sort state
 
 // Logic
 const showSearchResults = computed(() => {
@@ -198,12 +209,40 @@ const hasActiveFilter = computed(() => searchQuery.value.length > 0 || selectedT
 
 const filteredObjects = computed(() => {
     if (!hasActiveFilter.value) return []
-    return allObjects.value.filter(obj => {
+    let list = allObjects.value.filter(obj => {
         const q = searchQuery.value.toLowerCase()
         const matchText = !q || obj.name.toLowerCase().includes(q) || obj.description.toLowerCase().includes(q)
         const matchTags = selectedTags.value.every(tid => obj.tags.includes(tid))
         return matchText && matchTags
-    }).sort((a, b) => new Date(b.dateModified) - new Date(a.dateModified))
+    })
+    
+    return list.sort((a, b) => {
+        const isAPinned = pinnedIds.value.includes(a.id)
+        const isBPinned = pinnedIds.value.includes(b.id)
+        if (isAPinned && !isBPinned) return -1
+        if (!isAPinned && isBPinned) return 1
+        
+        // Internal Sort Logic
+        let valA, valB
+        if (sortState.value.field === 'views') {
+            valA = a.views || 0
+            valB = b.views || 0
+        } else {
+            // Default: Date Created
+            // Ensure we parse the date string correctly and handle potential errors
+            const dA = new Date(a.dateCreated)
+            const dB = new Date(b.dateCreated)
+            valA = isNaN(dA.getTime()) ? 0 : dA.getTime()
+            valB = isNaN(dB.getTime()) ? 0 : dB.getTime()
+        }
+
+        if (valA !== valB) {
+            return sortState.value.order === 'asc' ? valA - valB : valB - valA
+        }
+
+        // Tie-breaker: stable sort using ID if values are equal
+        return a.id.localeCompare(b.id)
+    })
 })
 
 const init = async () => {
@@ -319,7 +358,7 @@ const viewDetail = (id) => router.push(`/object/${id}`)
 
 /* --- 1. SEARCH COMPONENT --- */
 .search-component-wrapper {
-    position: absolute; left: 0; right: 60px;
+    position: absolute; left: 0; right: 80px;
     /* Base state */
     height: 50px;
     border-radius: 25px;
@@ -443,8 +482,28 @@ const viewDetail = (id) => router.push(`/object/${id}`)
 .clear-btn { color: #ff3b30; cursor: pointer; transition: 0.2s; }
 .clear-btn:hover { opacity: 0.7; }
 
-.corner-stack { position: fixed; bottom: 40px; right: 40px; z-index: 1000; display: flex; flex-direction: column; align-items: flex-end; gap: 10px; pointer-events: none; }
+.corner-stack { 
+    position: fixed; bottom: 40px; right: 40px; z-index: 1001; 
+    display: flex; flex-direction: column; /* Changed: stack downwards from top */
+    align-items: flex-end; gap: 10px; pointer-events: none; 
+}
 .corner-stack > * { pointer-events: auto; }
+
+/* Remove previous fixed positioning if present */
+.page-sort-control { display: none; } 
+.corner-sort-control {
+    z-index: 1000;
+}
+
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.2s ease;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+}
 
 .search-icon-mask {
   width: 16px; 
@@ -517,5 +576,9 @@ const viewDetail = (id) => router.push(`/object/${id}`)
   -webkit-transform: translate(0px, 0px);
   
   flex-shrink: 0;
+}
+
+.page-sort-control {
+    display: none;
 }
 </style>

@@ -3,6 +3,7 @@
     <transition name="bg-fade">
       <DynamicWave v-if="filteredObjects.length === 0"></DynamicWave>
     </transition>
+
     <!-- Profile List -->
     <section class="cards-container">
       <ObjectProfile
@@ -25,6 +26,8 @@
 
       <!-- Back to Top -->
       <BackTop/>
+
+      <SortControl v-model="sortState"/>
 
       <!-- fixed tags -->
       <div v-if="selectedTags.length > 0" class="selected-tags-stack">
@@ -53,7 +56,7 @@
         <div class="tags-drawer-content" :class="{ open: showAllTags }">
           <div class="hash-icon-wrapper" :class="{ hidden: showAllTags }">
             <div class="hash-icon-mask"
-              :style="{ maskImage: `url(/api/static/site/number.svg)`, WebkitMaskImage: `url(/api/static/site/number.svg)` }">
+              :style="{ maskImage: `url(/api/static/site/icons/number.svg)`, WebkitMaskImage: `url(/api/static/site/icons/number.svg)` }">
             </div>
           </div>
 
@@ -97,16 +100,14 @@
               :class="{ visible: isSearchExpanded }"
             />
             <div class="search-icon-wrapper" @click="clearSearch">
-              <!-- <span v-if="searchQuery" class="clear-x">×</span>
-              <svg v-else viewBox="-1 12 16 18" class="mag-glass"><path d="M14.298,27.202l-3.87-3.87c0.701-0.929,1.122-2.081,1.122-3.332c0-3.06-2.489-5.55-5.55-5.55c-3.06,0-5.55,2.49-5.55,5.55 c0,3.061,2.49,5.55,5.55,5.55c1.251,0,2.403-0.421,3.332-1.122l3.87,3.87c0.151,0.151,0.35,0.228,0.548,0.228 s0.396-0.076,0.548-0.228C14.601,27.995,14.601,27.505,14.298,27.202z M1.55,20c0-2.454,1.997-4.45,4.45-4.45 c2.454,0,4.45,1.997,4.45,4.45S8.454,24.45,6,24.45C3.546,24.45,1.55,22.454,1.55,20z"/></svg> -->
               <div v-if="searchQuery" class="search-clear-icon-wrapper">
                 <div class="search-clear-icon-mask"
-                  :style="{ maskImage: `url(/api/static/site/xmark.svg)`, WebkitMaskImage: `url(/api/static/site/xmark.svg)` }">
+                  :style="{ maskImage: `url(/api/static/site/icons/xmark.svg)`, WebkitMaskImage: `url(/api/static/site/icons/xmark.svg)` }">
                 </div>
               </div>
               <div v-else="searchQuery" class="search-mag-icon-wrapper">
                 <div class="search-mag-icon-mask"
-                  :style="{ maskImage: `url(/api/static/site/magnifyingglass.svg)`, WebkitMaskImage: `url(/api/static/site/magnifyingglass.svg)` }">
+                  :style="{ maskImage: `url(/api/static/site/icons/magnifyingglass.svg)`, WebkitMaskImage: `url(/api/static/site/icons/magnifyingglass.svg)` }">
                 </div>
               </div>
             </div>
@@ -136,6 +137,7 @@ import PageFooter from '../components/PageFooter.vue'
 import { NAV_HEIGHT } from '../config/constants'
 import BackTop from '../components/BackTop.vue'
 import DynamicWave from '../components/DynamicWave.vue'
+import SortControl from '../components/SortControl.vue' // Import SortControl
 
 const props = defineProps(['type'])
 const router = useRouter()
@@ -148,6 +150,7 @@ const searchQuery = ref('')
 const selectedTags = ref([])
 const showAllTags = ref(false)
 const showLimitToast = ref(false)
+const sortState = ref({ field: 'date', order: 'desc' }) // Add sort state
 
 const isHoveringSearch = ref(false)
 const searchInput = ref(null)
@@ -169,7 +172,28 @@ const filteredObjects = computed(() => {
     const isBPinned = pinnedIds.value.includes(b.id)
     if (isAPinned && !isBPinned) return -1
     if (!isAPinned && isBPinned) return 1
-    return new Date(b.dateModified) - new Date(a.dateModified)
+    
+    // Internal Sort Logic
+    let valA, valB
+    
+    if (sortState.value.field === 'views') {
+        valA = a.views || 0
+        valB = b.views || 0
+    } else {
+        // Default: Date Created
+        // Ensure we parse the date string correctly and handle potential errors
+        const dA = new Date(a.dateCreated)
+        const dB = new Date(b.dateCreated)
+        valA = isNaN(dA.getTime()) ? 0 : dA.getTime()
+        valB = isNaN(dB.getTime()) ? 0 : dB.getTime()
+    }
+
+    if (valA !== valB) {
+        return sortState.value.order === 'asc' ? valA - valB : valB - valA
+    }
+    
+    // Tie-breaker: stable sort using ID if values are equal
+    return a.id.localeCompare(b.id)
   })
 })
 
@@ -323,7 +347,7 @@ const viewDetail = (id) => router.push(`/object/${id}`)
 .selected-tags-stack {
   display: flex; flex-direction: column-reverse;
   gap: 8px; align-items: flex-end;
-  padding: 20px; margin-right: -20px; margin-bottom: -20px;
+  padding: 20px; margin-right: -20px; margin-bottom: -20px; margin-top: -20px;
 }
 
 .tag-pill { cursor: pointer; font-size: 12px; padding: 6px 10px 6px 12px; border-radius: 20px; transition: 0.2s; white-space: nowrap; user-select: none; }
@@ -509,4 +533,10 @@ const viewDetail = (id) => router.push(`/object/${id}`)
 .results-inner-padding { padding: 12px; padding-bottom: 0; }
 .no-results { font-size: 12px; color: #888; text-align: center; padding: 10px; }
 
+.page-sort-control {
+  position: fixed;
+  top: 80px;
+  right: 40px;
+  z-index: 9900;
+}
 </style>

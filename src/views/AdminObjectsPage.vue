@@ -21,6 +21,7 @@
         @toggle-pin="togglePin"
         @edit="openEditor"
         @delete="handleDelete"
+        @view="viewDetail"
       />
     </div>
 
@@ -36,26 +37,63 @@
       @create-tag="handleCreateNewTag"
       @refresh-assets="fetchAssets" 
     />
+
+    <!-- Corner Sort Control -->
+    <div class="corner-stack">
+      <SortControl v-model="sortState"/>
+    </div>
   </div>
 </template>
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
 import ObjectProfile from '../components/ObjectProfile.vue' 
 import ObjectEdit from '../components/ObjectEdit.vue'
+import SortControl from '../components/SortControl.vue'
 
+const router = useRouter()
 const allObjects = ref([])
 const allTags = ref([])
 const pinnedIds = ref([])
 const searchQuery = ref('')
 const editingObj = ref(null)
 const projectAssets = ref([])
+const sortState = ref({ field: 'date', order: 'desc' })
 
 const filteredObjects = computed(() => {
-  return allObjects.value.filter(obj => {
+  let list = allObjects.value.filter(obj => {
     const q = searchQuery.value.toLowerCase()
     return obj.name.toLowerCase().includes(q) || (obj.description && obj.description.toLowerCase().includes(q))
-  }).sort((a, b) => new Date(b.dateModified) - new Date(a.dateModified))
+  })
+
+  return list.sort((a, b) => {
+    const isAPinned = pinnedIds.value.includes(a.id)
+    const isBPinned = pinnedIds.value.includes(b.id)
+    
+    // Pinned items always on top
+    if (isAPinned && !isBPinned) return -1
+    if (!isAPinned && isBPinned) return 1
+    
+    // Sort by selected field
+    let valA, valB
+    
+    if (sortState.value.field === 'views') {
+      valA = a.views || 0
+      valB = b.views || 0
+    } else {
+      const dA = new Date(a.dateCreated)
+      const dB = new Date(b.dateCreated)
+      valA = isNaN(dA.getTime()) ? 0 : dA.getTime()
+      valB = isNaN(dB.getTime()) ? 0 : dB.getTime()
+    }
+
+    if (valA !== valB) {
+      return sortState.value.order === 'asc' ? valA - valB : valB - valA
+    }
+    
+    return a.id.localeCompare(b.id)
+  })
 })
 
 const init = async () => {
@@ -163,11 +201,14 @@ const handleUploadFiles = async (files) => {
   })
   await fetchAssets()
 }
+
+const viewDetail = (id) => router.push(`/object/${id}`)
 </script>
 
 <style scoped>
 .admin-objects-page {
   padding: 20px;
+  position: relative;
 }
 
 .admin-toolbar {
@@ -216,5 +257,13 @@ const handleUploadFiles = async (files) => {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
   gap: 20px;
+}
+
+.corner-stack {
+  position: fixed;
+  bottom: 40px;
+  right: 40px;
+  z-index: 1000;
+  pointer-events: auto;
 }
 </style>

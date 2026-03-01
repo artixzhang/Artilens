@@ -65,8 +65,8 @@
       <div class="icon-wrapper">
         <div class="icon-mask"
           :style="{ 
-            maskImage: `url(/api/static/site/${isPaused ? 'play.fill.svg' : 'pause.fill.svg'})`, 
-            WebkitMaskImage: `url(/api/static/site/${isPaused ? 'play.fill.svg' : 'pause.fill.svg'})` 
+            maskImage: `url(/api/static/site/icons/${isPaused ? 'play.fill.svg' : 'pause.fill.svg'})`, 
+            WebkitMaskImage: `url(/api/static/site/icons/${isPaused ? 'play.fill.svg' : 'pause.fill.svg'})` 
           }">
         </div>
       </div>
