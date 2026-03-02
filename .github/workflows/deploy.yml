@@ -3,6 +3,15 @@ name: Build and Push Multi-Arch Images
 on:
   push:
     branches: [ "main" ]
+    paths:
+      - 'src/**'
+      - 'server/**'
+      - 'public/**'
+      - 'package*.json'
+      - 'Dockerfile.*'
+      - 'nginx.conf'
+      - 'vite.config.js'
+      - 'index.html'
   workflow_dispatch:
 
 env:
