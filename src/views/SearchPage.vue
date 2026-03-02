@@ -16,8 +16,9 @@
                         'faded-out': showAllTags,
                         'expanded': showSearchResults 
                     }"
-                    @mouseenter="isHoveringSearch = true"
-                    @mouseleave="isHoveringSearch = false"
+                    @mouseenter="handleSearchMouseEnter"
+                    @mouseleave="handleSearchMouseLeave"
+                    @click="handleSearchClick"
                 >
                     <!-- Main Content -->
                     <div class="search-content-box">
@@ -59,9 +60,11 @@
                 <!-- TAG DRAWER COMPONENT -->
                 <div 
                     class="tag-drawer-wrapper"
+                    ref="tagsDrawerRef"
                     :class="{ 'expanded': showAllTags }"
-                    @mouseenter="showAllTags = true"
-                    @mouseleave="showAllTags = false"
+                    @mouseenter="handleTagsMouseEnter"
+                    @mouseleave="handleTagsMouseLeave"
+                    @click="toggleTags"
                 >
                     <div class="tag-content-box">
                          <!-- Closed Icon -->
@@ -81,7 +84,7 @@
                         <div class="tag-panel-content" :class="{ visible: showAllTags }">
                             <div class="panel-scroll">
                                 <div class="tags-flex-grid">
-                                    <div v-for="tag in unselectedTags" :key="tag.id" class="tag-pill normal" @click="toggleTag(tag.id)">
+                                    <div v-for="tag in unselectedTags" :key="tag.id" class="tag-pill normal" @click.stop="toggleTag(tag.id)">
                                         {{ tag.name }} <span class="count">{{ tag.count }}</span>
                                     </div>
                                 </div>
@@ -104,6 +107,10 @@
                     </span>
                 </transition-group>
             </div>
+
+            <Teleport to="body">
+                <div v-if="showAllTags || isHoveringSearch" class="page-backdrop" @click="closeBackdrop"></div>
+            </Teleport>
 
         </div>
 
@@ -161,7 +168,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, watch } from 'vue'
+import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import ObjectProfile from '../components/ObjectProfile.vue' 
 import ObjectEdit from '../components/ObjectEdit.vue'
@@ -184,9 +191,11 @@ const selectedTags = ref([])
 const showAllTags = ref(false)
 const isInputFocused = ref(false)
 const isHoveringSearch = ref(false)
+const tagsDrawerRef = ref(null)
 const editingObj = ref(null)
 const projectAssets = ref([])
 const sortState = ref({ field: 'date', order: 'desc' }) // Add sort state
+const isMobile = ref(false)
 
 // Logic
 const showSearchResults = computed(() => {
@@ -283,7 +292,36 @@ watch(() => route.query, () => {
     applyUrlParams()
 })
 
-onMounted(init)
+const checkMobile = () => {
+    isMobile.value = window.innerWidth <= 768 || ('ontouchstart' in window)
+}
+
+const handleTagsMouseEnter = () => { if (!isMobile.value) showAllTags.value = true }
+const handleTagsMouseLeave = () => { if (!isMobile.value) showAllTags.value = false }
+const toggleTags = () => { if (isMobile.value) showAllTags.value = !showAllTags.value }
+
+const handleSearchMouseEnter = () => { if (!isMobile.value) isHoveringSearch.value = true }
+const handleSearchMouseLeave = () => { if (!isMobile.value) isHoveringSearch.value = false }
+const handleSearchClick = () => { 
+    if (isMobile.value && !isHoveringSearch.value) {
+        isHoveringSearch.value = true
+    }
+}
+
+const closeBackdrop = () => {
+    showAllTags.value = false
+    isHoveringSearch.value = false
+}
+
+onMounted(() => {
+    checkMobile()
+    window.addEventListener('resize', checkMobile)
+    init()
+})
+
+onUnmounted(() => {
+    window.removeEventListener('resize', checkMobile)
+})
 
 const handleInputBlur = () => { setTimeout(() => isInputFocused.value = false, 200) }
 
@@ -350,11 +388,15 @@ const viewDetail = (id) => router.push(`/object/${id}`)
 /* --- Fixed Header --- */
 .fixed-header-wrapper {
     position: fixed; top: 80px; left: 50%; transform: translateX(-50%);
-    width: 600px; z-index: 1000;
+    width: 600px; z-index: 3000;
     display: flex; flex-direction: column; gap: 15px;
+    pointer-events: none;
 }
 
-.header-top-row { position: relative; height: 50px; width: 100%; }
+.fixed-header-wrapper > * { pointer-events: auto; }
+
+.header-top-row { position: relative; height: 50px; width: 100%; pointer-events: none; }
+.header-top-row > * { pointer-events: auto; }
 
 /* --- 1. SEARCH COMPONENT --- */
 .search-component-wrapper {
@@ -435,8 +477,9 @@ const viewDetail = (id) => router.push(`/object/${id}`)
 .tag-panel-content {
     opacity: 0; transition: opacity 0.3s ease 0.1s;
     height: 100%; display: flex; flex-direction: column;
+    pointer-events: none;
 }
-.tag-panel-content.visible { opacity: 1; }
+.tag-panel-content.visible { opacity: 1; pointer-events: auto; }
 .panel-scroll { flex: 1; overflow-y: auto; padding: 20px; }
 .panel-footer { padding: 10px 20px; border-top: 1px solid rgba(0,0,0,0.05); text-align: right; color: #999; font-size: 11px; text-transform: uppercase; }
 
@@ -466,7 +509,7 @@ const viewDetail = (id) => router.push(`/object/${id}`)
     flex: 1;
     width: 100%;
     margin: 0 auto;
-    padding: 80px 40px 40px 40px;
+    padding: 70px 30px 30px 30px;
     box-sizing: border-box;
     z-index: 800;
 }
@@ -483,7 +526,7 @@ const viewDetail = (id) => router.push(`/object/${id}`)
 .clear-btn:hover { opacity: 0.7; }
 
 .corner-stack { 
-    position: fixed; bottom: 40px; right: 40px; z-index: 1001; 
+    position: fixed; bottom: 40px; right: 40px; z-index: 3000; 
     display: flex; flex-direction: column; /* Changed: stack downwards from top */
     align-items: flex-end; gap: 10px; pointer-events: none; 
 }
@@ -519,8 +562,8 @@ const viewDetail = (id) => router.push(`/object/${id}`)
   
   -webkit-mask-position: center;
   mask-position: center;
-  transform: translate(0px, -1px);
-  -webkit-transform: translate(0px, -1px);
+  position: relative;
+  top: -1px;
   
   flex-shrink: 0;
 
@@ -541,8 +584,8 @@ const viewDetail = (id) => router.push(`/object/${id}`)
   
   -webkit-mask-position: center;
   mask-position: center;
-  transform: translate(0px, -1px);
-  -webkit-transform: translate(0px, -1px);
+  position: relative;
+  top: -1px;
   
   flex-shrink: 0;
   margin: 0 4px 0 0;
@@ -572,13 +615,24 @@ const viewDetail = (id) => router.push(`/object/${id}`)
   
   -webkit-mask-position: center;
   mask-position: center;
-  transform: translate(0px, 0px);
-  -webkit-transform: translate(0px, 0px);
   
   flex-shrink: 0;
 }
 
 .page-sort-control {
     display: none;
+}
+
+/* 新增: 针对手机屏幕的优化 (两列显示) */
+@media (max-width: 768px) {
+  .cards-container {
+    padding: 30px; /* 减小外边距 */
+    gap: 30px;     /* 增大卡片间距 */
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  }
+}
+
+.page-backdrop {
+    position: fixed; inset: 0; background: transparent; z-index: 2500;
 }
 </style>

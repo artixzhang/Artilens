@@ -442,7 +442,7 @@ const save = () => {
 <style scoped>
 /* --- Modal Layout --- */
 .admin-modal { position: fixed; inset: 0; z-index: 9999; background: rgba(0, 0, 0, 0.2); backdrop-filter: blur(10px); display: flex; align-items: center; justify-content: center; }
-.modal-window { background: rgba(255, 255, 255, 1); backdrop-filter: blur(10px); width: 950px; max-height: 85vh; border-radius: 20px; display: flex; flex-direction: column; box-shadow: 0 0 40px 12px rgba(0, 0, 0, 0.2); overflow: hidden; animation: slideUp 0.3s ease-out; }
+.modal-window { background: rgba(255, 255, 255, 1); backdrop-filter: blur(10px); width: 950px; max-width: 90vw; max-height: 85vh; border-radius: 20px; display: flex; flex-direction: column; box-shadow: 0 0 40px 12px rgba(0, 0, 0, 0.2); overflow: hidden; animation: slideUp 0.3s ease-out; }
 .modal-header { padding: 20px 30px; border-bottom: 1px solid #f0f0f0; display: flex; justify-content: space-between; align-items: center; }
 .header-left h2 { font-size: 18px; font-weight: 700; margin: 0; display: inline-block; }
 .obj-id { margin-left: 10px; font-family: monospace; background: #eee; padding: 2px 6px; border-radius: 4px; color: #666; font-size: 12px; }

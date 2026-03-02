@@ -1,5 +1,10 @@
 <template>
-  <div class="waterfall-container" @wheel.prevent="handleWheel" @mousemove="handleMouseMove">
+  <div class="waterfall-container" 
+    @wheel.prevent="handleWheel" 
+    @mousemove="handleMouseMove"
+    @touchstart="handleTouchStart"
+    @touchmove.prevent="handleTouchMove"
+  >
     <!-- 背景流层 -->
     <div class="columns-wrapper" :class="{ 'blur-bg': showModal }">
       <div 
@@ -64,6 +69,7 @@
     >
       <div class="icon-wrapper">
         <div class="icon-mask"
+          :class="isPaused ? 'play-icon' : 'pause-icon'"
           :style="{ 
             maskImage: `url(/api/static/site/icons/${isPaused ? 'play.fill.svg' : 'pause.fill.svg'})`, 
             WebkitMaskImage: `url(/api/static/site/icons/${isPaused ? 'play.fill.svg' : 'pause.fill.svg'})` 
@@ -109,6 +115,7 @@ let targetSpeed = BASE_SPEED // 目标速度（用于 lerp 过渡）
 let scrollVelocity = 0 // 滚轮带来的额外速度
 let isHovering = false
 let idleTimer = null
+let lastTouchY = 0
 let isModalOpen = false
 const isPaused = ref(false)
 
@@ -304,6 +311,26 @@ const handleWheel = (e) => {
   scrollVelocity -= e.deltaY * 0.05
   
   // 唤醒流速 (如果之前停了)
+  resetIdleTimer()
+}
+
+const handleTouchStart = (e) => {
+  if (e.touches.length > 0) {
+    lastTouchY = e.touches[0].clientY
+  }
+  resetIdleTimer()
+}
+
+const handleTouchMove = (e) => {
+  if (isModalOpen || e.touches.length === 0) return
+  
+  const currentY = e.touches[0].clientY
+  const deltaY = currentY - lastTouchY
+  lastTouchY = currentY
+  
+  // 触摸灵敏度系数，手动滑动
+  scrollVelocity += deltaY * 0.1
+  
   resetIdleTimer()
 }
 
@@ -551,9 +578,11 @@ onUnmounted(() => {
 }
 
 .icon-mask {
-  width: 20px; 
-  height: 20px;
-  
+  /* 通用属性 */
+  box-sizing: content-box;
+  -webkit-mask-origin: content-box;
+  mask-origin: content-box;
+
   background-color: #555555;
   
   -webkit-mask-size: contain;
@@ -564,7 +593,23 @@ onUnmounted(() => {
   
   -webkit-mask-position: center;
   mask-position: center;
+
+  transform: translateZ(0);
   
   flex-shrink: 0;
+}
+
+.play-icon {
+  width: 20px; 
+  height: 20px;
+  padding: 2px;
+  /* margin-left: 2px */
+}
+
+.pause-icon {
+  width: 20px; 
+  height: 20px;
+  padding: 2px;
+  margin-left: 0px
 }
 </style>

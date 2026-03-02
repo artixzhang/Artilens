@@ -1,9 +1,10 @@
 <template>
   <div 
     class="sort-control" 
+    ref="rootRef"
     :class="{ expanded: isHovered }"
-    @mouseenter="isHovered = true" 
-    @mouseleave="isHovered = false"
+    @mouseenter="handleMouseEnter" 
+    @mouseleave="handleMouseLeave"
   >
     <!-- Main Icon Header -->
     <div class="sort-header" @click="toggleExpand">
@@ -52,11 +53,15 @@
          </div>
        </div>
     </div>
+
+    <Teleport to="body">
+      <div v-if="isHovered && isMobile" class="sort-backdrop" @click="closeMenu"></div>
+    </Teleport>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, onUnmounted } from 'vue'
 
 const props = defineProps({
   modelValue: {
@@ -65,16 +70,39 @@ const props = defineProps({
   }
 })
 
-const emit = defineEmits(['update:modelValue'])
+const emit = defineEmits(['update:modelValue', 'open'])
 
 const isHovered = ref(false)
 const isMobile = ref(false)
+const rootRef = ref(null)
 
 const toggleExpand = () => {
   // 在手机上点击header来切换展开状态
   if (isMobile.value) {
     isHovered.value = !isHovered.value
+    if (isHovered.value) emit('open')
   }
+}
+
+const closeMenu = () => {
+  isHovered.value = false
+}
+
+const handleMouseEnter = () => {
+    if (!isMobile.value) {
+        isHovered.value = true
+        emit('open')
+    }
+}
+
+defineExpose({
+    close: closeMenu
+})
+
+const handleMouseLeave = () => {
+    if (!isMobile.value) {
+        isHovered.value = false
+    }
 }
 
 const select = (field) => {
@@ -96,6 +124,10 @@ const select = (field) => {
   }
 }
 
+const handleClickOutside = (event) => {
+    // Removed document click listener
+}
+
 const detectMobile = () => {
   isMobile.value = window.innerWidth <= 768 || window.ontouchstart !== undefined
 }
@@ -103,6 +135,10 @@ const detectMobile = () => {
 onMounted(() => {
   detectMobile()
   window.addEventListener('resize', detectMobile)
+})
+
+onUnmounted(() => {
+    window.removeEventListener('resize', detectMobile)
 })
 
 </script>
@@ -146,6 +182,7 @@ onMounted(() => {
   -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat;
   -webkit-mask-position: center; mask-position: center;
   transition: background-color 0.2s;
+  transform: translateZ(0);
 }
 
 /* Header */
@@ -228,5 +265,15 @@ onMounted(() => {
 }
 .type-icon {
   width: 20px; height: 20px;
+}
+
+.sort-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 2500; /* High but below navbar (usually) and sort control if configured */
+  background: transparent;
 }
 </style>

@@ -83,8 +83,10 @@ const getTypeClass = (type) => {
 .card-hero { position: relative; aspect-ratio: 1 / 1; cursor: pointer; overflow: hidden; }
 .hero-img { width: 100%; height: 100%; background-size: cover; background-position: center; transition: transform 0.6s cubic-bezier(0.25, 1, 0.5, 1); }
 .hero-overlay { position: absolute; inset: 0; background: rgba(0,0,0,0.3); display: flex; align-items: center; justify-content: center; padding: 30px; opacity: 0; transition: 0.4s; backdrop-filter: blur(8px); }
-.object-card:hover .hero-img { transform: scale(1.05); }
-.object-card:hover .hero-overlay { opacity: 1; }
+@media (hover: hover) {
+  .object-card:hover .hero-img { transform: scale(1.05); }
+  .object-card:hover .hero-overlay { opacity: 1; }
+}
 .description { color: white; text-align: start; font-size: 18px; line-height: 1.5; }
 
 /* Badges Container */

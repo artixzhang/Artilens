@@ -10,8 +10,8 @@
                     <li 
                         v-for="item in displayMenuItems" 
                         :key="item.path" 
-                        @click="navigateTo(item.path)"
-                        @mouseenter="isHovered = true; hoveredItem = item"
+                        @click="handleItemClick(item)"
+                        @mouseenter="handleMouseEnter(item)"
                         :class="{ 'active-title': hoveredItem === item }"
                     >
                         <div class="nav-item-top">
@@ -66,13 +66,14 @@
     </nav>
 
     <Teleport to="body">
-        <div ref="backdropRef" class="nav-page-backdrop"></div>
+        <!-- Added click handler to close menu when tapping outside -->
+        <div ref="backdropRef" class="nav-page-backdrop" @click="closeMenu"></div>
     </Teleport>
 
 </template>
 
 <script setup>
-import { ref, watch, nextTick, onMounted, computed } from 'vue'
+import { ref, watch, nextTick, onMounted, computed, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import gsap from 'gsap'
 import yaml from 'js-yaml'
@@ -83,6 +84,7 @@ const isHovered = ref(false)
 const hoveredItem = ref(null)
 const navbarRef = ref(null)
 const backdropRef = ref(null)
+const isMobile = ref(false) // State for mobile detection
 
 const menuItems = ref([])
 
@@ -157,9 +159,25 @@ const fetchNavData = async () => {
     }
 }
 
+// Mobile Detection Logic
+const checkMobile = () => {
+    isMobile.value = window.innerWidth <= 768 || ('ontouchstart' in window)
+}
+
 onMounted(() => {
+    checkMobile()
+    window.addEventListener('resize', checkMobile)
     fetchNavData()
 })
+
+onUnmounted(() => {
+    window.removeEventListener('resize', checkMobile)
+})
+
+const closeMenu = () => {
+    isHovered.value = false
+    hoveredItem.value = null
+}
 
 const navigateTo = (path) => {
     // User system
@@ -167,29 +185,51 @@ const navigateTo = (path) => {
         localStorage.removeItem('authToken')
         localStorage.removeItem('userInfo')
         router.push('/')
-        isHovered.value = false
-        hoveredItem.value = null
+        closeMenu()
         return
     }
     
     router.push(path)
-    isHovered.value = false
-    hoveredItem.value = null
+    closeMenu()
+}
+
+// Logic: On mobile, tap to expand first; tap again to navigate
+const handleItemClick = (item) => {
+    if (isMobile.value && item.children && item.children.length > 0) {
+        // If this item is NOT currently open, open it and stop navigation
+        if (hoveredItem.value !== item || !isHovered.value) {
+            hoveredItem.value = item
+            isHovered.value = true
+            return
+        }
+    }
+    // Otherwise navigate
+    navigateTo(item.path)
+}
+
+const handleMouseEnter = (item) => {
+    if (!isMobile.value) {
+        isHovered.value = true
+        hoveredItem.value = item
+    }
 }
 
 const handleMouseLeave = () => {
-    isHovered.value = false
-    hoveredItem.value = null
+    if (!isMobile.value) {
+        closeMenu()
+    }
 }
 
 watch([isHovered, hoveredItem], async () => {
     if (isHovered.value && hoveredItem.value?.children?.length > 0) {
         await nextTick()
+        
         gsap.to(navbarRef.value, { height: 'auto', minHeight: 300, backgroundColor: 'rgba(255, 255, 255, 1)', duration: 0.4, ease: "expo.out", overwrite: true })
-        gsap.to(backdropRef.value, { autoAlpha: 1, duration: 0.4, ease: "expo.out", overwrite: true })
+        // Added pointerEvents: 'auto' so the backdrop can capture clicks
+        gsap.to(backdropRef.value, { autoAlpha: 1, pointerEvents: 'auto', duration: 0.4, ease: "expo.out", overwrite: true })
     } else {
         gsap.to(navbarRef.value, { height: NAV_HEIGHT, minHeight: NAV_HEIGHT, backgroundColor: 'rgba(255, 255, 255, 0.6)', duration: 0.3, ease: "power2.inOut", overwrite: true })
-        gsap.to(backdropRef.value, { autoAlpha: 0, duration: 0.3, ease: "power2.inOut", overwrite: true })
+        gsap.to(backdropRef.value, { autoAlpha: 0, pointerEvents: 'none', duration: 0.3, ease: "power2.inOut", overwrite: true })
     }
 })
 </script>

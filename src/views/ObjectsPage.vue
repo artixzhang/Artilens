@@ -27,7 +27,16 @@
       <!-- Back to Top -->
       <BackTop/>
 
-      <SortControl v-model="sortState"/>
+      <SortControl 
+        ref="sortControlRef"
+        v-model="sortState"
+        @open="handleSortOpen"
+      />
+      
+      <!-- Backdrop for mobile interactions -->
+      <Teleport to="body">
+        <div v-if="showAllTags || isSearchExpanded" class="page-backdrop" @click="closeBackdrop"></div>
+      </Teleport>
 
       <!-- fixed tags -->
       <div v-if="selectedTags.length > 0" class="selected-tags-stack">
@@ -48,8 +57,10 @@
       <!-- All tags box -->
       <div 
         class="tags-drawer-wrapper"
-        @mouseenter="showAllTags = true"
-        @mouseleave="showAllTags = false"
+        ref="tagsDrawerRef"
+        @mouseenter="handleTagsMouseEnter"
+        @mouseleave="handleTagsMouseLeave"
+        @click="toggleTags"
       >
         <div class="blur-glow-bg tags-glow" :class="{ visible: showAllTags }"></div>
 
@@ -63,7 +74,7 @@
           <div class="drawer-inner" :class="{ visible: showAllTags }">
             <div class="drawer-scroll-area">
               <div class="tags-flex-grid">
-                <div v-for="tag in unselectedTags" :key="tag.id" class="tag-pill normal" @click="toggleTag(tag.id)">
+                <div v-for="tag in unselectedTags" :key="tag.id" class="tag-pill normal" @click.stop="toggleTag(tag.id)">
                   {{ tag.name }} <span class="count">{{ tag.count }}</span>
                 </div>
               </div>
@@ -81,8 +92,10 @@
 
       <!-- Search -->
       <div class="search-wrapper" 
-           @mouseenter="isHoveringSearch = true"
-           @mouseleave="isHoveringSearch = false">
+           ref="searchWrapperRef"
+           @mouseenter="handleSearchMouseEnter"
+           @mouseleave="handleSearchMouseLeave"
+           @click="handleSearchClick">
         
         <div class="blur-glow-bg search-glow" :class="{ visible: isSearchExpanded }"></div>
         
@@ -130,7 +143,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, watch } from 'vue'
+import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import ObjectProfile from '../components/ObjectProfile.vue' 
 import PageFooter from '../components/PageFooter.vue'
@@ -154,6 +167,10 @@ const sortState = ref({ field: 'date', order: 'desc' }) // Add sort state
 
 const isHoveringSearch = ref(false)
 const searchInput = ref(null)
+const tagsDrawerRef = ref(null)
+const searchWrapperRef = ref(null)
+const sortControlRef = ref(null)
+const isMobile = ref(false)
 
 const isSearchExpanded = computed(() => isHoveringSearch.value || searchQuery.value.length > 0)
 const showSearchResults = computed(() => isHoveringSearch.value && searchQuery.value.length > 0 && tagSuggestions.value.length > 0)
@@ -229,7 +246,63 @@ const applyUrlParams = () => {
 }
 
 watch(() => route.query.tag, applyUrlParams)
-onMounted(init)
+
+const checkMobile = () => {
+    isMobile.value = window.innerWidth <= 768 || ('ontouchstart' in window)
+}
+
+const closeOthers = (exclude) => {
+    if (exclude !== 'tags') showAllTags.value = false
+    if (exclude !== 'search') isHoveringSearch.value = false
+    if (exclude !== 'sort' && sortControlRef.value) sortControlRef.value.close()
+}
+
+const handleTagsMouseEnter = () => { 
+    if (!isMobile.value) { 
+        showAllTags.value = true 
+        closeOthers('tags')
+    } 
+}
+const handleTagsMouseLeave = () => { if (!isMobile.value) showAllTags.value = false }
+const toggleTags = () => { 
+    if (isMobile.value) { 
+        showAllTags.value = !showAllTags.value 
+        if (showAllTags.value) closeOthers('tags')
+    }
+}
+
+const handleSearchMouseEnter = () => { 
+    if (!isMobile.value) { 
+        isHoveringSearch.value = true 
+        closeOthers('search')
+    } 
+}
+const handleSearchMouseLeave = () => { if (!isMobile.value) isHoveringSearch.value = false }
+const handleSearchClick = () => { 
+    if (isMobile.value && !isSearchExpanded.value) {
+        isHoveringSearch.value = true
+        closeOthers('search')
+    }
+}
+
+const handleSortOpen = () => {
+    closeOthers('sort')
+}
+
+const closeBackdrop = () => {
+    showAllTags.value = false
+    isHoveringSearch.value = false
+}
+
+onMounted(() => {
+    checkMobile()
+    window.addEventListener('resize', checkMobile)
+    init()
+})
+
+onUnmounted(() => {
+    window.removeEventListener('resize', checkMobile)
+})
 
 const clearSearch = () => {
   if (searchQuery.value) {
@@ -300,22 +373,21 @@ const viewDetail = (id) => router.push(`/object/${id}`)
   /* 修改: 减小最小宽度 (350px -> 260px)，让电脑端排列更密 */
   grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); 
   gap: 30px; 
-  padding: 40px; 
+  padding: 30px; 
   align-content: flex-start; 
 }
 
 /* 新增: 针对手机屏幕的优化 (两列显示) */
 @media (max-width: 768px) {
   .cards-container {
-    padding: 12px; /* 减小外边距 */
-    gap: 12px;     /* 减小卡片间距 */
-    /* 允许卡片更窄，以在手机上放下两列 (例如 iPhone 宽度约 375px-390px) */
+    padding: 30px;
+    gap: 30px;
     grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
   }
 }
 
 /* --- Corner Stack --- */
-.corner-stack { position: fixed; bottom: 40px; right: 40px; z-index: 1000; display: flex; flex-direction: column; align-items: flex-end; gap: 10px; pointer-events: none; }
+.corner-stack { position: fixed; bottom: 40px; right: 40px; z-index: 3000; display: flex; flex-direction: column; align-items: flex-end; gap: 10px; pointer-events: none; }
 .corner-stack > * { pointer-events: auto; }
 
 .blur-glow-bg {
@@ -396,8 +468,6 @@ const viewDetail = (id) => router.push(`/object/${id}`)
   
   -webkit-mask-position: center;
   mask-position: center;
-  transform: translate(0px, 0px);
-  -webkit-transform: translate(0px, 0px);
   
   flex-shrink: 0;
 }
@@ -423,8 +493,8 @@ const viewDetail = (id) => router.push(`/object/${id}`)
   
   -webkit-mask-position: center;
   mask-position: center;
-  transform: translate(1px, 0px);
-  -webkit-transform: translate(1px, 0px);
+  position: relative;
+  left: 1px;
   
   flex-shrink: 0;
 }
@@ -450,14 +520,14 @@ const viewDetail = (id) => router.push(`/object/${id}`)
   
   -webkit-mask-position: center;
   mask-position: center;
-  transform: translate(1px, 0px);
-  -webkit-transform: translate(1px, 0px);
+  position: relative;
+  left: 1px;
   
   flex-shrink: 0;
 }
 
-.drawer-inner { display: flex; flex-direction: column; height: 100%; width: 100%; opacity: 0; transition: opacity 0.2s; }
-.drawer-inner.visible { opacity: 1; transition-delay: 0.1s; }
+.drawer-inner { display: flex; flex-direction: column; height: 100%; width: 100%; opacity: 0; transition: opacity 0.2s; pointer-events: none; }
+.drawer-inner.visible { opacity: 1; transition-delay: 0.1s; pointer-events: auto; }
 .drawer-bottom-bar { padding: 10px 16px; font-size: 11px; color: #888; border-top: 1px solid rgba(0,0,0,0.04); text-transform: uppercase; letter-spacing: 0.5px; margin-top: auto; flex-shrink: 0; display: flex; justify-content: space-between; align-items: center; }
 .clear-btn { color: #ff3b30; cursor: pointer; transition: 0.2s; }
 .clear-btn:hover { opacity: 0.7; }
@@ -538,5 +608,9 @@ const viewDetail = (id) => router.push(`/object/${id}`)
   top: 80px;
   right: 40px;
   z-index: 9900;
+}
+
+.page-backdrop {
+    position: fixed; inset: 0; background: transparent; z-index: 2500;
 }
 </style>
