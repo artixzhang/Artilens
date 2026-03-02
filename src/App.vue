@@ -13,6 +13,29 @@ import NavBar from './components/NavBar.vue'
 import '@fontsource-variable/noto-sans-sc'
 import yaml from 'js-yaml'
 
+const updateIcons = (iconUrl) => {
+  if (!iconUrl) return
+
+  const existingIcons = document.querySelectorAll('link[rel*="icon"]')
+  existingIcons.forEach(el => el.remove())
+
+  const timestamp = new Date().getTime()
+  const finalUrl = iconUrl.includes('?') 
+    ? `${iconUrl}&v=${timestamp}` 
+    : `${iconUrl}?v=${timestamp}`
+
+  const link = document.createElement('link')
+  link.rel = 'icon'
+  link.type = 'image/png'
+  link.href = finalUrl
+  document.head.appendChild(link)
+
+  const appleLink = document.createElement('link')
+  appleLink.rel = 'apple-touch-icon'
+  appleLink.href = finalUrl
+  document.head.appendChild(appleLink)
+}
+
 const fetchSiteInfo = async () => {
   try {
     const response = await fetch('/api/static/site/info.yaml')
@@ -24,12 +47,7 @@ const fetchSiteInfo = async () => {
     }
     
     if (data.site_icon) {
-      // 同时更新标准图标和 Apple 图标
-      const iconLink = document.querySelector('link[rel="icon"]')
-      const appleIconLink = document.querySelector('link[rel="apple-touch-icon"]')
-      
-      if (iconLink) iconLink.setAttribute('href', data.site_icon)
-      if (appleIconLink) appleIconLink.setAttribute('href', data.site_icon)
+      updateIcons(data.site_icon)
     }
   } catch (error) {
     console.error('Error fetching site info:', error)
@@ -55,7 +73,6 @@ if (viewportMeta) {
 </script>
 
 <style>
-/* 彻底清除边距，确保坐标系一致 */
 * { 
   margin: 0;
   padding: 0;
