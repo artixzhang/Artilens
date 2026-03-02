@@ -16,24 +16,31 @@ import yaml from 'js-yaml'
 const updateIcons = (iconUrl) => {
   if (!iconUrl) return
 
-  const existingIcons = document.querySelectorAll('link[rel*="icon"]')
-  existingIcons.forEach(el => el.remove())
-
   const timestamp = new Date().getTime()
-  const finalUrl = iconUrl.includes('?') 
-    ? `${iconUrl}&v=${timestamp}` 
-    : `${iconUrl}?v=${timestamp}`
 
-  const link = document.createElement('link')
-  link.rel = 'icon'
-  link.type = 'image/png'
-  link.href = finalUrl
-  document.head.appendChild(link)
+  const finalUrl = iconUrl.startsWith('http') || iconUrl.startsWith('/') 
+    ? `${iconUrl}${iconUrl.includes('?') ? '&' : '?'}v=${timestamp}`
+    : `/${iconUrl}${iconUrl.includes('?') ? '&' : '?'}v=${timestamp}`
 
-  const appleLink = document.createElement('link')
-  appleLink.rel = 'apple-touch-icon'
-  appleLink.href = finalUrl
-  document.head.appendChild(appleLink)
+  const rels = ['icon', 'apple-touch-icon']
+
+  rels.forEach(relType => {
+    const oldLink = document.querySelector(`link[rel="${relType}"]`)
+    
+    const newLink = document.createElement('link')
+    newLink.rel = relType
+    newLink.href = finalUrl
+    
+    if (finalUrl.toLowerCase().endsWith('.png')) {
+      newLink.type = 'image/png'
+    }
+
+    if (oldLink) {
+      document.head.replaceChild(newLink, oldLink)
+    } else {
+      document.head.appendChild(newLink)
+    }
+  })
 }
 
 const fetchSiteInfo = async () => {
