@@ -64,9 +64,15 @@ onUnmounted(() => {
   color: #555;
 }
 
-.back-top:hover {
-  background: rgba(200, 200, 200, 0.5); 
-  transform: scale(1.05);
+@media (hover: hover) {
+  .back-top:hover {
+    background: rgba(200, 200, 200, 0.5); 
+    transform: scale(1.05);
+  }
+}
+
+.back-top:active {
+  transform: scale(0.95);
 }
 
 .chevron-icon-wrapper {

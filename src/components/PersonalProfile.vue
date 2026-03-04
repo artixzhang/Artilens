@@ -24,11 +24,7 @@
       <!-- 地区胶囊 -->
       <div class="location-capsule" v-if="profile.location && profile.location.value">
         <div class="capsule-icon-bg">
-          <div v-if="isSvgFile(profile.location.icon)" 
-               class="earth-icon-masked"
-               :style="{ maskImage: `url(${profile.location.icon})`, WebkitMaskImage: `url(${profile.location.icon})` }">
-          </div>
-          <img v-else :src="profile.location.icon" class="earth-icon-img" />
+          <img :src="profile.location.icon" class="earth-icon-img" />
         </div>
         <span class="location-text">{{ profile.location.value }}</span>
       </div>
@@ -36,13 +32,16 @@
       <!-- Email 图标 -->
       <a v-if="profile.email && profile.email.url" 
          :href="`mailto:${profile.email.url}`" 
-         class="icon-link email-link" 
+         class="icon-link"
          title="Email">
-         <div v-if="isSvgFile(profile.email.icon)" 
-              class="email-icon-masked"
-              :style="{ maskImage: `url(${profile.email.icon})`, WebkitMaskImage: `url(${profile.email.icon})` }">
-         </div>
-         <img v-else :src="profile.email.icon" class="social-img" />
+         <img :src="profile.email.icon" class="email-img" />
+      </a>
+
+      <a v-if="profile.website && profile.website.url" 
+         :href="profile.website.url" 
+         class="icon-link"
+         title="Website">
+         <img :src="profile.website.icon" class="website-img" />
       </a>
 
       <!-- 社交图标循环 -->
@@ -68,11 +67,6 @@ const profile = ref({
   email: { url: '', icon: '' },
   social: {}
 })
-
-const isSvgFile = (str) => {
-  if (!str) return false
-  return /\.svg($|\?)/i.test(str) || str.startsWith('data:image/svg+xml')
-}
 
 onMounted(async () => {
   try {
@@ -193,20 +187,6 @@ const pillHeight = 24; // 稍微调高一点胶囊高度以匹配图标视觉
   z-index: 9;
 }
 
-.earth-icon-masked {
-  width: calc(v-bind(pillHeight) * 1px - 2px);
-  height: calc(v-bind(pillHeight) * 1px - 2px);
-  background-color: #333333;
-  -webkit-mask-size: contain;
-  mask-size: contain;
-  -webkit-mask-repeat: no-repeat;
-  mask-repeat: no-repeat;
-  -webkit-mask-position: center;
-  mask-position: center;
-  position: relative;
-  z-index: 10;
-}
-
 .earth-icon-img {
   width: 100%;
   height: 100%;
@@ -237,16 +217,18 @@ const pillHeight = 24; // 稍微调高一点胶囊高度以匹配图标视觉
   transform: scale(1.05);
 }
 
-.email-icon-masked {
+.email-img {
   width: 22px;
   height: 22px;
-  background-color: #333333;
-  -webkit-mask-size: contain;
-  mask-size: contain;
-  -webkit-mask-repeat: no-repeat;
-  mask-repeat: no-repeat;
-  -webkit-mask-position: center;
-  mask-position: center;
+  object-fit: contain;
+  display: block;
+}
+
+.website-img {
+  width: 20px;
+  height: 20px;
+  object-fit: contain;
+  display: block;
 }
 
 .social-img {

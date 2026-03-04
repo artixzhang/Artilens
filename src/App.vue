@@ -13,35 +13,6 @@ import NavBar from './components/NavBar.vue'
 import '@fontsource-variable/noto-sans-sc'
 import yaml from 'js-yaml'
 
-const updateIcons = (iconUrl) => {
-  if (!iconUrl) return
-
-  const timestamp = new Date().getTime()
-
-  const finalUrl = iconUrl.startsWith('http') || iconUrl.startsWith('/') 
-    ? `${iconUrl}${iconUrl.includes('?') ? '&' : '?'}v=${timestamp}`
-    : `/${iconUrl}${iconUrl.includes('?') ? '&' : '?'}v=${timestamp}`
-
-  const rels = ['icon', 'apple-touch-icon']
-
-  rels.forEach(relType => {
-    const oldLink = document.querySelector(`link[rel="${relType}"]`)
-    
-    const newLink = document.createElement('link')
-    newLink.rel = relType
-    newLink.href = finalUrl
-    
-    if (finalUrl.toLowerCase().endsWith('.png')) {
-      newLink.type = 'image/png'
-    }
-
-    if (oldLink) {
-      document.head.replaceChild(newLink, oldLink)
-    } else {
-      document.head.appendChild(newLink)
-    }
-  })
-}
 
 const fetchSiteInfo = async () => {
   try {
@@ -52,13 +23,24 @@ const fetchSiteInfo = async () => {
     if (data.site_name) {
       document.title = data.site_name
     }
-    
-    if (data.site_icon) {
-      updateIcons(data.site_icon)
+
+    if (data.site_desc) {
+      updateMetaDescription(data.site_desc)
     }
+    
   } catch (error) {
     console.error('Error fetching site info:', error)
   }
+}
+
+const updateMetaDescription = (desc) => {
+  let meta = document.querySelector('meta[name="description"]')
+  if (!meta) {
+    meta = document.createElement('meta')
+    meta.name = 'description'
+    document.head.appendChild(meta)
+  }
+  meta.setAttribute('content', desc)
 }
 
 onMounted(() => {

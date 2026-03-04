@@ -143,7 +143,7 @@ watch(renderedMarkdown, (newContent) => {
 
 .markdown-body {
     background: transparent;
-    font-family: 'Noto Sans SC', 'OpenSans', -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif !important;
+    font-family: 'Noto Sans SC Variable', -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif !important;
 }
 
 :deep(.code-wrapper) {
