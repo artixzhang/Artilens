@@ -6,6 +6,7 @@
         </div>
 
         <div v-else-if="obj" class="content-wrapper">
+            <TableOfContents />
             <div 
                 class="header-banner"
                 :style="{ backgroundImage: `url(${obj.assetBase + obj.coverImage})` }"
@@ -59,7 +60,8 @@ import PageFooter from '../components/PageFooter.vue'
 import MiniTag from '../components/MiniTag.vue'
 import BackTop from '../components/BackTop.vue'
 import MarkdownRenderer from '../components/MarkdownRenderer.vue'
-import { NAV_HEIGHT } from '../config/constants' // 修复：补充引入常量，否则 CSS 中的 v-bind 会失效
+import TableOfContents from '../components/TableOfContents.vue'
+import { NAV_HEIGHT } from '../config/constants'
 
 const route = useRoute()
 const obj = ref(null)

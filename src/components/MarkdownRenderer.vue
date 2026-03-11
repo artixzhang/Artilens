@@ -63,7 +63,7 @@ const getFullLanguageName = (lang) => {
 const md = new MarkdownIt({
     html: true,
     linkify: true,
-    typographer: true,
+    typographer: false,
     highlight: function (str, lang) {
         if (lang && hljs.getLanguage(lang)) {
             try {

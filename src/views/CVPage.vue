@@ -1,6 +1,7 @@
 <template>
     <DynamicWave/>
     <div class="cv-page">
+        <TableOfContents />
         <PersonalProfile class="personal-profile"/>
         <main class="cv-content">
             <!-- 直接传入 src，组件内部会自动加载 -->
@@ -21,6 +22,7 @@ import PageFooter from '../components/PageFooter.vue';
 import PersonalProfile from '../components/PersonalProfile.vue';
 import { NAV_HEIGHT } from '../config/constants';
 import MarkdownRenderer from '../components/MarkdownRenderer.vue';
+import TableOfContents from '../components/TableOfContents.vue';
 </script>
 
 <style scoped>

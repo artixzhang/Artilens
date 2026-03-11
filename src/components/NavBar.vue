@@ -243,7 +243,7 @@ watch([isHovered, hoveredItem], async () => {
     width: 100%;
     height: v-bind(NAV_HEIGHT);
     background: rgba(255, 255, 255, 0.6);
-    backdrop-filter: blur(20px) saturate(200%);
+    backdrop-filter: blur(20px) saturate(120%);
     z-index: 9999;
     overflow: hidden;
     display: flex;
