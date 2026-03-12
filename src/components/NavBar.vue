@@ -89,14 +89,19 @@ const isMobile = ref(false) // State for mobile detection
 
 const menuItems = ref([])
 
+// [NEW] 添加响应式状态来追踪认证状态变化
+const authState = ref({
+  token: localStorage.getItem('authToken'),
+  userInfo: localStorage.getItem('userInfo') ? JSON.parse(localStorage.getItem('userInfo')) : null
+})
+
 // User system
 const isAdmin = computed(() => {
-    const userInfo = localStorage.getItem('userInfo')
-    return userInfo && JSON.parse(userInfo).role === 'admin'
+    return authState.value.userInfo?.role === 'admin'
 })
 
 const isLoggedIn = computed(() => {
-    return !!localStorage.getItem('authToken')
+    return !!authState.value.token
 })
 
 const displayMenuItems = computed(() => {
@@ -127,6 +132,12 @@ const displayMenuItems = computed(() => {
         return item
     })
 })
+
+// [NEW] 更新认证状态方法
+const updateAuthState = () => {
+    authState.value.token = localStorage.getItem('authToken')
+    authState.value.userInfo = localStorage.getItem('userInfo') ? JSON.parse(localStorage.getItem('userInfo')) : null
+}
 
 const fetchNavData = async () => {
     try {
@@ -169,6 +180,21 @@ onMounted(() => {
     checkMobile()
     window.addEventListener('resize', checkMobile)
     fetchNavData()
+    
+    // 初始化认证状态
+    updateAuthState()
+    
+    // [NEW] 监听路由变化,每次路由变化时更新认证状态
+    router.afterEach(() => {
+        updateAuthState()
+    })
+    
+    // [NEW] 监听 storage 事件(用于同一浏览器的多个标签页)
+    window.addEventListener('storage', (e) => {
+        if (e.key === 'authToken' || e.key === 'userInfo') {
+            updateAuthState()
+        }
+    })
 })
 
 onUnmounted(() => {
@@ -185,6 +211,9 @@ const navigateTo = (path) => {
     if (path === '/logout') {
         localStorage.removeItem('authToken')
         localStorage.removeItem('userInfo')
+        // [NEW] 立即更新认证状态
+        authState.value.token = null
+        authState.value.userInfo = null
         router.push('/')
         closeMenu()
         return

@@ -74,6 +74,14 @@ const router = createRouter({
 
 // 4. 添加全局路由守卫 (核心拦截逻辑)
 router.beforeEach(async (to, from, next) => {
+  // 处理登出路由
+  if (to.path === '/logout') {
+    localStorage.removeItem('authToken')
+    localStorage.removeItem('userInfo')
+    next('/')
+    return
+  }
+
   const token = localStorage.getItem('authToken')
 
   if (to.meta.requiresAuth) {
