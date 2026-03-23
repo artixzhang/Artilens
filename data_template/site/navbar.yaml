@@ -1,0 +1,47 @@
+items:
+  -
+    name: "Artilens"
+    icon: ""
+    path: "/"
+    label: "logo"
+  -
+    name: "Projects"
+    path: "/projects"
+    label: "object"
+    desc: "Detailed engineering projects."
+    subitems:
+      -
+        name: "Explore All Projects"
+        path: "/projects"
+      -
+        name: "Software"
+        path: "/projects?tag=software"
+  -
+    name: "Posts"
+    path: "/posts"
+    label: "object"
+    desc: "Detailed engineering posts."
+    subitems:
+      -
+        name: "Explore All Posts"
+        path: "/posts"
+  -
+    name: "CV"
+    path: "/cv"
+  -
+    name: "Search"
+    icon: "/api/static/site/icons/magnifyingglass.svg"
+    path: "/search"
+  -
+    name: "Avatar"
+    icon: "/api/static/site/icons/avatar.webp"
+    path: "/me"
+    label: "account"
+    desc: ""
+    subitems:
+      - 
+        name: "About Me"
+        path: "/me"
+      -
+        name: "Log In"
+        path: "/login"

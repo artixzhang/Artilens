@@ -1,18 +1,20 @@
 name: ""
-avatar: ""
+avatar: "/api/static/site/icons/avatar.webp"
 headline:
-  - ""
   - ""
 location:
   value: ""
-  icon: ""
+  icon: "api/static/site/icons/globe.asia.australia.fill.svg"
 email:
   url: ""
-  icon: ""
+  icon: "api/static/site/icons/envelope.fill.svg"
+website:
+  url: ""
+  icon: "api/static/site/icons/globe.svg"
 social:
   Github:
     url: ""
-    icon: ""
+    icon: "api/static/site/icons/github_logo.svg"
   Twitter:
     url: ""
     icon: ""
