@@ -12,6 +12,7 @@ on:
       - 'nginx.conf'
       - 'vite.config.js'
       - 'index.html'
+      - '.github/workflows/**'
   workflow_dispatch:
 
 env:
