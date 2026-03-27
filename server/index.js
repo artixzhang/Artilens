@@ -1,6 +1,7 @@
 import express from 'express';
 import cors from 'cors';
 import fs from 'fs';
+import path from 'path';
 import objectRoutes from './routes/objects.js';
 import tagRoutes from './routes/tags.js';
 import pinnedRoutes from './routes/pinned.js';
@@ -14,6 +15,101 @@ const app = express();
 
 // Trust the proxy (Cloudflare Tunnel) to correctly identify HTTPS
 app.set('trust proxy', 1);
+
+// --- Access Logging Middleware ---
+const logDir = path.join(DATA_PATH, 'logs');
+if (fs.existsSync(DATA_PATH) && !fs.existsSync(logDir)) {
+    try {
+        fs.mkdirSync(logDir);
+    } catch (e) {
+        console.error('Failed to create logs directory:', e);
+    }
+}
+
+app.use((req, res, next) => {
+    const start = Date.now();
+    res.on('finish', () => {
+        const duration = Date.now() - start;
+        
+        // Priority for real IP: 
+        // 1. CF-Connecting-IP (Cloudflare Tunnel)
+        // 2. X-Forwarded-For (Proxies like Nginx)
+        // 3. X-Real-IP (Nginx)
+        // 4. req.ip (Express resolved IP based on trust proxy)
+        let clientIp = req.headers['cf-connecting-ip'] || 
+                       req.headers['x-forwarded-for'] || 
+                       req.headers['x-real-ip'] || 
+                       req.ip || 
+                       '-';
+        
+        // If X-Forwarded-For is a list, take the first IP (the original client)
+        if (clientIp.includes(',')) {
+            clientIp = clientIp.split(',')[0].trim();
+        }
+        
+        const country = req.headers['cf-ipcountry'] || '-';
+        const timestamp = new Date().toISOString();
+        const method = req.method;
+        const url = req.originalUrl || req.url;
+        const status = res.statusCode;
+        const userAgent = req.headers['user-agent'] || '-';
+        const referer = req.headers['referer'] || '-';
+
+        // Filter out noisy requests from logging to keep the log clean and meaningful
+        // Only log actual page navigations (track) and login attempts.
+        const isTrack = url.startsWith('/api/track');
+        const isLogin = url.startsWith('/api/login') && method === 'POST';
+        
+        if (!isTrack && !isLogin) {
+            return; // Skip logging this request
+        }
+
+        // Decode the URL if it's a track request (e.g., convert %2F to /)
+        let displayUrl = url;
+        if (isTrack) {
+            try {
+                displayUrl = decodeURIComponent(url);
+            } catch (e) {
+                // Keep original if decoding fails
+            }
+        }
+
+        // Try to decode JWT to check if request is from a logged in user 
+        // (Since this logger runs before the auth middleware)
+        let username = 'guest';
+        const authHeader = req.headers['authorization'];
+        if (authHeader && authHeader.startsWith('Bearer ')) {
+            const token = authHeader.split(' ')[1];
+            try {
+                // Do a quick unsafe decode just for logging purposes
+                const payload = Buffer.from(token.split('.')[1], 'base64').toString();
+                const decoded = JSON.parse(payload);
+                if (decoded && decoded.username) {
+                    username = decoded.username;
+                }
+            } catch (e) {
+                // Ignore parsing errors, just fall back to 'guest'
+            }
+        }
+
+        // Format: [ISO Date] IP [Country] METHOD URL STATUS DURATIONms "User-Agent" "Referer" [User: username]
+        const logLine = `[${timestamp}] ${clientIp} [${country}] ${method} ${displayUrl} ${status} ${duration}ms "${userAgent}" "${referer}" [User: ${username}]\n`;
+
+        // Output to console for quick docker logs debugging (Only if we aren't spamming)
+        console.log(`[Access] ${clientIp} [${country}] ${method} ${displayUrl} ${status} ${duration}ms [User: ${username}]`);
+
+        // Write to log file in data volume for convenient viewing
+        if (fs.existsSync(logDir)) {
+            // Log rotation per month to avoid huge files, e.g., access-YYYY-MM.log
+            const monthStr = timestamp.substring(0, 7); 
+            const logFile = path.join(logDir, `access-${monthStr}.log`);
+            fs.appendFile(logFile, logLine, (err) => {
+                if (err) console.error('[Log Error] Failed to write to access log:', err);
+            });
+        }
+    });
+    next();
+});
 
 // --- Dynamic Sitemap & Robots ---
 
@@ -108,6 +204,13 @@ if (!fs.existsSync(DATA_PATH)) {
 
 app.use(cors());
 app.use(express.json());
+
+// Endpoint specifically for tracking SPA frontend navigations
+app.get('/api/track', (req, res) => {
+    // We don't need to do anything here. 
+    // The access logging middleware will automatically record this request.
+    res.status(204).end(); // 204 No Content
+});
 
 app.post('/api/login', loginLimiter, (req, res) => {
     const { username, password } = req.body;
