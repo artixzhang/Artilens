@@ -214,7 +214,7 @@ app.use(cors());
 app.use(express.json());
 
 // Endpoint specifically for tracking SPA frontend navigations
-app.get('/api/track', (req, res) => {
+app.post('/api/track', (req, res) => {
     // We don't need to do anything here. 
     // The access logging middleware will automatically record this request.
     res.status(204).end(); // 204 No Content

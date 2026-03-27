@@ -1,7 +1,7 @@
 <template>
   <div class="admin-logs-page">
     <div class="logs-header">
-      <h2>Server Access Logs (Current Month)</h2>
+      <h2>Access Logs</h2>
       <button @click="fetchLogs" class="refresh-btn">Refresh</button>
     </div>
     
@@ -57,11 +57,11 @@ onMounted(() => {
 }
 
 .refresh-btn {
-  padding: 6px 16px;
+  padding: 8px 12px;
   background-color: #333;
   color: white;
   border: none;
-  border-radius: 6px;
+  border-radius: 8px;
   cursor: pointer;
   transition: background-color 0.2s;
 }

@@ -144,7 +144,9 @@ router.afterEach((to) => {
     lastTrackedPath = to.fullPath;
     lastTrackTime = now;
     
+    // 使用 POST 请求（或者带随机时间戳的 GET），防止 Chrome 激进缓存 204 No Content 导致请求发不出去
     fetch(`/api/track?path=${encodeURIComponent(to.fullPath)}`, {
+      method: 'POST',
       headers: token ? { 'Authorization': `Bearer ${token}` } : {}
     }).catch(() => {});
   }
