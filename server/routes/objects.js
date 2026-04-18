@@ -227,8 +227,9 @@ router.get('/:id', verifyTokenOptional, async (req, res) => {
 
         const dirPath = path.join(OBJECTS_PATH, id);
         const configPath = path.join(dirPath, 'config.yaml');
-        const statsPath = path.join(dirPath, 'stats.yaml'); // [NEW]
-        const mdPath = path.join(dirPath, 'content.md');
+        const statsPath = path.join(dirPath, 'stats.yaml');
+        const mdPathEn = path.join(dirPath, 'content.en.md');
+        const mdPathDefault = path.join(dirPath, 'content.md');
 
         if (!fs.existsSync(configPath)) {
             return res.status(404).json({ success: false, message: "项目不存在" });
@@ -260,8 +261,10 @@ router.get('/:id', verifyTokenOptional, async (req, res) => {
 
         // 读取 Markdown
         let markdown = "";
-        if (fs.existsSync(mdPath)) {
-            markdown = fs.readFileSync(mdPath, 'utf8');
+        if (fs.existsSync(mdPathEn)) {
+            markdown = fs.readFileSync(mdPathEn, 'utf8');
+        } else if (fs.existsSync(mdPathDefault)) {
+            markdown = fs.readFileSync(mdPathDefault, 'utf8');
         }
 
         // 返回给前端之前，添加虚拟的 author 字段 (同 utils.js 逻辑)
