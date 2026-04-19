@@ -1,7 +1,7 @@
 <template>
   <div class="admin-logs-page">
     <div class="logs-header">
-      <h2>Access Logs</h2>
+      <h2>{{ t('admin.access_logs') }}</h2>
       <button @click="fetchLogs" class="refresh-btn">Refresh</button>
     </div>
     
@@ -13,6 +13,7 @@
 
 <script setup>
 import { ref, onMounted, nextTick } from 'vue'
+import { t } from '../utils/i18n'
 
 const logsContent = ref('Loading logs...')
 const logsContainer = ref(null)

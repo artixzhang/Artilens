@@ -112,6 +112,18 @@ router.post('/create', verifyToken, (req, res) => {
 
     const now = new Date().toISOString();
 
+        // Ensure name and description are i18n format if a new project is created
+        const upgradeI18n = (field) => {
+            if (typeof field === 'string') return { 'en': field, 'zh-CN': field };
+            if (field && typeof field === 'object') return field;
+            return { 'en': '', 'zh-CN': '' };
+        };
+
+        name = upgradeI18n(name);
+        if (rest.description) {
+            rest.description = upgradeI18n(rest.description);
+        }
+
     const initialConfig = {
         id,
         dateCreated: now,
@@ -224,10 +236,13 @@ router.post('/delete', verifyToken, (req, res) => {
 router.get('/:id', verifyTokenOptional, async (req, res) => {
     try {
         const { id } = req.params; 
+        const lang = req.query.lang || 'en';
 
         const dirPath = path.join(OBJECTS_PATH, id);
         const configPath = path.join(dirPath, 'config.yaml');
         const statsPath = path.join(dirPath, 'stats.yaml');
+        const mdPathLang = path.join(dirPath, `content.${lang}.md`);
+        const mdPathFallback = lang === 'zh-TW' ? path.join(dirPath, 'content.zh-CN.md') : null;
         const mdPathEn = path.join(dirPath, 'content.en.md');
         const mdPathDefault = path.join(dirPath, 'content.md');
 
@@ -261,7 +276,11 @@ router.get('/:id', verifyTokenOptional, async (req, res) => {
 
         // 读取 Markdown
         let markdown = "";
-        if (fs.existsSync(mdPathEn)) {
+        if (fs.existsSync(mdPathLang)) {
+            markdown = fs.readFileSync(mdPathLang, 'utf8');
+        } else if (mdPathFallback && fs.existsSync(mdPathFallback)) {
+            markdown = fs.readFileSync(mdPathFallback, 'utf8');
+        } else if (fs.existsSync(mdPathEn)) {
             markdown = fs.readFileSync(mdPathEn, 'utf8');
         } else if (fs.existsSync(mdPathDefault)) {
             markdown = fs.readFileSync(mdPathDefault, 'utf8');

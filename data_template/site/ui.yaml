@@ -1,0 +1,131 @@
+nav:
+  explore:
+    en: "Explore"
+    zh-CN: "探索"
+  admin_console:
+    en: "Admin Console"
+    zh-CN: "管理控制台"
+  log_out:
+    en: "Log Out"
+    zh-CN: "退出登录"
+  log_in:
+    en: "Log In"
+    zh-CN: "登录"
+
+admin:
+  objects:
+    en: "Objects"
+    zh-CN: "项目"
+  create_object:
+    en: "New Object"
+    zh-CN: "新建项目"
+  users:
+    en: "Users"
+    zh-CN: "用户"
+  access_logs:
+    en: "Access Logs"
+    zh-CN: "访问日志"
+  username:
+    en: "Username"
+    zh-CN: "用户名"
+  role:
+    en: "Role"
+    zh-CN: "角色"
+  actions:
+    en: "Actions"
+    zh-CN: "操作"
+  delete:
+    en: "Delete"
+    zh-CN: "删除"
+  save:
+    en: "Save"
+    zh-CN: "保存"
+  cancel:
+    en: "Cancel"
+    zh-CN: "取消"
+  create_user:
+    en: "Create User"
+    zh-CN: "创建用户"
+  password_leave_blank:
+    en: "Password (leave blank to keep)"
+    zh-CN: "密码（留空则不修改）"
+  password:
+    en: "Password"
+    zh-CN: "密码"
+  add_user:
+    en: "Add User"
+    zh-CN: "添加用户"
+  new_password:
+    en: "New Password"
+    zh-CN: "新密码"
+
+login:
+  create_admin:
+    en: "Create Administrator"
+    zh-CN: "创建管理员"
+  username:
+    en: "Username"
+    zh-CN: "用户名"
+  password:
+    en: "Password"
+    zh-CN: "密码"
+  go_to_console:
+    en: "Go to Console"
+    zh-CN: "进入控制台"
+  setting_up:
+    en: "Setting up..."
+    zh-CN: "正在配置..."
+  login:
+    en: "Log In"
+    zh-CN: "登录"
+
+common:
+  name_en:
+    en: "Name (English)"
+    zh-CN: "名称 (English)"
+  name_zh:
+    en: "Name (简体中文)"
+    zh-CN: "名称 (简体中文)"
+  desc_en:
+    en: "Description (English)"
+    zh-CN: "简介 (English)"
+  desc_zh:
+    en: "Description (简体中文)"
+    zh-CN: "简介 (简体中文)"
+  save_changes:
+    en: "Save Changes"
+    zh-CN: "保存更改"
+  cancel:
+    en: "Cancel"
+    zh-CN: "取消"
+
+search:
+  placeholder_long:
+    en: "Search for title, description and tags..."
+    zh-CN: "搜索标题、简介及标签..."
+  placeholder_short:
+    en: "Search..."
+    zh-CN: "搜索..."
+  no_matching_tags:
+    en: "No matching tags"
+    zh-CN: "无匹配标签"
+  all_tags:
+    en: "All Tags"
+    zh-CN: "全部标签"
+  clear_selection:
+    en: "Clear Selection"
+    zh-CN: "清除选择"
+  no_results_found:
+    en: "No results found"
+    zh-CN: "未找到任何结果"
+  maximum_tags_allowed:
+    en: "Maximum 7 tags allowed"
+    zh-CN: "最多只能选择 7 个标签"
+
+footer:
+  copyright:
+    en: "Copyright"
+    zh-CN: "版权所有"
+  all_rights_reserved:
+    en: "All rights reserved."
+    zh-CN: "保留所有权利。"

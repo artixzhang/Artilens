@@ -1,16 +1,16 @@
 <template>
   <div class="users-page">
     <div class="action-bar">
-      <button class="btn-primary" @click="showCreateModal = true">Add New User</button>
+      <button class="btn-primary" @click="showCreateModal = true">{{ t('admin.add_user') }}</button>
     </div>
 
     <table class="users-table">
       <thead>
         <tr>
           <th>ID</th>
-          <th>Username</th>
-          <th>Role</th>
-          <th>Actions</th>
+          <th>{{ t('admin.username') }}</th>
+          <th>{{ t('admin.role') }}</th>
+          <th>{{ t('admin.actions') }}</th>
         </tr>
       </thead>
       <tbody>
@@ -20,7 +20,7 @@
           <td><span :class="['role-badge', user.role]">{{ user.role }}</span></td>
           <td>
             <button @click="editUser(user)">Edit</button>
-            <button @click="deleteUser(user)" class="btn-danger" :disabled="user.id === currentUserId">Delete</button>
+            <button @click="deleteUser(user)" class="btn-danger" :disabled="user.id === currentUserId">{{ t('admin.delete') }}</button>
           </td>
         </tr>
       </tbody>
@@ -29,25 +29,25 @@
     <!-- User Edit/Create Modal -->
     <div v-if="showCreateModal || editingUser" class="modal-overlay">
       <div class="modal">
-        <h3>{{ editingUser ? 'Edit User' : 'Create New User' }}</h3>
+        <h3>{{ editingUser ? 'Edit User' : t('admin.create_user') }}</h3>
         <div class="form-group">
-          <label>Username</label>
+          <label>{{ t('admin.username') }}</label>
           <input v-model="userForm.username" type="text" />
         </div>
         <div class="form-group">
-          <label>Password {{ editingUser ? '(Leave blank to keep same)' : '' }}</label>
+          <label>{{ editingUser ? t('admin.password_leave_blank') : t('admin.password') }}</label>
           <input v-model="userForm.password" type="password" />
         </div>
         <div class="form-group">
-          <label>Role</label>
+          <label>{{ t('admin.role') }}</label>
           <select v-model="userForm.role">
             <option value="user">User</option>
             <option value="admin">Admin</option>
           </select>
         </div>
         <div class="modal-actions">
-          <button @click="saveUser">Save</button>
-          <button @click="closeModal" class="btn-secondary">Cancel</button>
+          <button @click="saveUser">{{ t('admin.save') }}</button>
+          <button @click="closeModal" class="btn-secondary">{{ t('admin.cancel') }}</button>
         </div>
       </div>
     </div>
@@ -56,6 +56,7 @@
 
 <script setup>
 import { ref, onMounted, computed } from 'vue'
+import { t } from '../utils/i18n'
 
 const users = ref([])
 const showCreateModal = ref(false)

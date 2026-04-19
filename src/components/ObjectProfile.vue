@@ -3,7 +3,7 @@
     <router-link :to="`/object/${obj.id}`" class="card-hero">
       <div class="hero-img" :style="{ backgroundImage: `url(${obj.basePath + obj.coverImage})` }"></div>
       <div class="hero-overlay">
-        <p class="description">{{ obj.description }}</p>
+        <p class="description">{{ getLocalized(obj.description) }}</p>
       </div>
       
       <!-- Tags Container (Top Left) -->
@@ -45,7 +45,7 @@
 
     <div class="card-footer">
       <router-link :to="`/object/${obj.id}`" class="title-link">
-        <h3 class="title scroll-fade">{{ obj.name }}</h3>
+        <h3 class="title scroll-fade">{{ getLocalized(obj.name) }}</h3>
       </router-link>
       <div class="meta-bottom">
         <div class="tag-list scroll-fade">
@@ -65,6 +65,7 @@
 
 <script setup>
 import MiniTag from './MiniTag.vue'
+import { getLocalized } from '../utils/i18n'
 
 const props = defineProps({
   obj: { type: Object, required: true },

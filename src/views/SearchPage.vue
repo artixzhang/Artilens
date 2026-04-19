@@ -28,7 +28,7 @@
                             </div>
                             <input 
                                 v-model="searchQuery" 
-                                placeholder="Search for title, description and tags..." 
+                                :placeholder="t('search.placeholder_long')" 
                                 ref="searchInput"
                                 @focus="isInputFocused = true"
                                 @blur="handleInputBlur"
@@ -48,10 +48,10 @@
                              <div class="dropdown-inner">
                                 <div v-if="tagSuggestions.length > 0" class="tags-flex-grid">
                                     <div v-for="tag in tagSuggestions" :key="tag.id" class="tag-pill normal" @mousedown.prevent="toggleTag(tag.id)">
-                                        {{ tag.name }}
+                                        {{ getLocalized(tag.name) }}
                                     </div>
                                 </div>
-                                <div v-else class="no-results">No matching tags</div>
+                                <div v-else class="no-results">{{ t('search.no_matching_tags') }}</div>
                             </div>
                         </div>
                     </div>
@@ -85,13 +85,13 @@
                             <div class="panel-scroll">
                                 <div class="tags-flex-grid">
                                     <div v-for="tag in unselectedTags" :key="tag.id" class="tag-pill normal" @click.stop="toggleTag(tag.id)">
-                                        {{ tag.name }} <span class="count">{{ tag.count }}</span>
+                                        {{ getLocalized(tag.name) }} <span class="count">{{ tag.count }}</span>
                                     </div>
                                 </div>
                             </div>
                             <div class="panel-footer">
-                                <span v-if="selectedTags.length > 0" class="clear-btn" @click.stop="selectedTags = []">Clear Selection</span>
-                                <span v-else>All Tags</span>
+                                <span v-if="selectedTags.length > 0" class="clear-btn" @click.stop="selectedTags = []">{{ t('search.clear_selection') }}</span>
+                                <span v-else>{{ t('search.all_tags') }} ({{ unselectedTags.length }})</span>
                             </div>
                         </div>
                     </div>
@@ -103,7 +103,7 @@
             <div v-if="selectedTags.length > 0" class="header-bottom-row">
                 <transition-group name="list-fade">
                     <span v-for="tid in selectedTags" :key="tid" class="tag-pill active fixed-item" @click="toggleTag(tid)">
-                        {{ getTagName(tid) }} <span class="close-icon">×</span>
+                        {{ getLocalized(getTagName(tid)) }} <span class="close-icon">×</span>
                     </span>
                 </transition-group>
             </div>
@@ -119,7 +119,7 @@
             <div v-if="!hasActiveFilter" class="empty-state">
             </div>
             <div v-else-if="filteredObjects.length === 0" class="empty-state">
-                <h2>No results found</h2>
+                <h2>{{ t('search.no_results_found') }}</h2>
             </div>
 
             <section v-else class="cards-container">
@@ -177,6 +177,7 @@ import { NAV_HEIGHT } from '../config/constants'
 import BackTop from '../components/BackTop.vue'
 import DynamicWave from '../components/DynamicWave.vue'
 import SortControl from '../components/SortControl.vue' // Import SortControl
+import { getLocalized, t } from '../utils/i18n'
 
 const props = defineProps(['mode']) 
 const router = useRouter()
@@ -220,7 +221,19 @@ const filteredObjects = computed(() => {
     if (!hasActiveFilter.value) return []
     let list = allObjects.value.filter(obj => {
         const q = searchQuery.value.toLowerCase()
-        const matchText = !q || obj.name.toLowerCase().includes(q) || obj.description.toLowerCase().includes(q)
+        
+        // Support searching via both en and zh-CN names and descriptions
+        const getNameString = (name) => {
+            if (typeof name === 'string') return name.toLowerCase()
+            if (name && typeof name === 'object') {
+                return ((name.en || '') + ' ' + (name['zh-CN'] || '')).toLowerCase()
+            }
+            return ''
+        }
+        const nameStr = getNameString(obj.name)
+        const descStr = obj.description ? getNameString(obj.description) : ''
+
+        const matchText = !q || nameStr.includes(q) || descStr.includes(q)
         const matchTags = selectedTags.value.every(tid => obj.tags.includes(tid))
         return matchText && matchTags
     })

@@ -119,15 +119,25 @@ export const getAllObjectsFromFiles = () => {
                 }
             });
 
+            // Helper to upgrade strings to i18n object
+            const upgradeI18n = (field) => {
+                if (typeof field === 'string') {
+                    return { 'en': field, 'zh-CN': field };
+                } else if (field && typeof field === 'object') {
+                    return field;
+                }
+                return { 'en': '', 'zh-CN': '' };
+            };
+
             const repairedConfig = {
                 id: folderName,
-                name: existingConfig.name || "New Object",
+                name: upgradeI18n(existingConfig.name || "New Object"),
                 dateCreated: existingConfig.dateCreated || new Date().toISOString(),
                 dateModified: existingConfig.dateModified || existingConfig.dateCreated || new Date().toISOString(),
                 type: existingConfig.type || "project",
                 visibility: existingConfig.visibility || "public",
                 user: cleanedUserPermissions,
-                description: existingConfig.description || "",
+                description: upgradeI18n(existingConfig.description || ""),
                 basePath: `/api/static/objects/${folderName}/`, 
                 coverImage: existingConfig.coverImage || "", 
                 cardImages: existingConfig.cardImages || [],

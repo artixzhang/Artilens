@@ -16,8 +16,12 @@
           <!-- Left Column: Form -->
           <div class="column-form">
             <div class="form-group">
-              <label>Title</label>
-              <input v-model="localObj.name" class="modern-input large-text" />
+              <label>{{ t('common.name_en') }}</label>
+              <input v-model="localObj.name.en" class="modern-input large-text" />
+            </div>
+            <div class="form-group">
+              <label>{{ t('common.name_zh') }}</label>
+              <input v-model="localObj.name['zh-CN']" class="modern-input large-text" />
             </div>
 
             <!-- Segments Row -->
@@ -55,8 +59,13 @@
             </div>
 
             <div class="form-group">
-              <label>Description</label>
-              <textarea v-model="localObj.description" rows="4" class="modern-textarea"></textarea>
+              <label>{{ t('common.desc_en') }}</label>
+              <textarea v-model="localObj.description.en" rows="3" class="modern-textarea"></textarea>
+            </div>
+            
+            <div class="form-group">
+              <label>{{ t('common.desc_zh') }}</label>
+              <textarea v-model="localObj.description['zh-CN']" rows="3" class="modern-textarea"></textarea>
             </div>
 
             <div class="form-group" v-if="canManageAccess">
@@ -107,7 +116,7 @@
               <div class="modern-tag-container">
                 <div class="selected-zone">
                   <span v-for="tid in localObj.tags" :key="tid" class="pill-removable">
-                    {{ getTagName(tid) }}
+                    {{ getLocalized(getTagName(tid)) }}
                     <span class="remove-icon" @click="removeTagFromEdit(tid)">×</span>
                   </span>
                 </div>
@@ -121,7 +130,7 @@
                   />
                   <ul v-if="showEditTagSuggestions && editTagSuggestions.length > 0" class="tag-dropdown">
                     <li v-for="tag in editTagSuggestions" :key="tag.id" @click="addTagToEdit(tag)">
-                      {{ tag.name }}
+                      {{ getLocalized(tag.name) }}
                     </li>
                   </ul>
                 </div>
@@ -213,7 +222,8 @@
       </div>
 
       <footer class="modal-footer">
-        <button @click="save" class="btn-primary">Save Changes</button>
+        <button @click="$emit('close')" class="btn-cancel" style="margin-right: 15px; background: transparent; border: 1px solid #ccc; padding: 10px 20px; border-radius: 8px; cursor: pointer;">{{ t('common.cancel') }}</button>
+        <button @click="save" class="btn-primary">{{ t('common.save_changes') }}</button>
       </footer>
     </div>
   </div>
@@ -221,6 +231,7 @@
 
 <script setup>
 import { ref, computed, watch, onMounted } from 'vue'
+import { t, getLocalized } from '../utils/i18n'
 
 const props = defineProps({
   modelValue: { type: Object, required: true },

@@ -3,12 +3,13 @@
     class="mini-tag" 
     @click.stop="handleTagClick"
   >
-    {{ name }}
+    {{ getLocalized(name) }}
   </span>
 </template>
 
 <script setup>
 import { useRouter } from 'vue-router'
+import { getLocalized } from '../utils/i18n'
 
 const props = defineProps({
   id: {

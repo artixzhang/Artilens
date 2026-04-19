@@ -4,9 +4,9 @@
         <TableOfContents />
         <PersonalProfile class="personal-profile"/>
         <main class="cv-content">
-            <!-- 直接传入 src，组件内部会自动加载 -->
+            <!-- 绑定 content 属性，由本组件动态获取文本后传入 -->
             <MarkdownRenderer
-                src="/api/static/cv/cv.md"
+                :content="markdownContent"
                 asset-base="/api/static/cv/"
             />
         </main>
@@ -16,6 +16,7 @@
 </template>
 
 <script setup>
+import { ref, onMounted, watch } from 'vue';
 import BackTop from '../components/BackTop.vue';
 import DynamicWave from '../components/DynamicWave.vue';
 import PageFooter from '../components/PageFooter.vue';
@@ -23,6 +24,36 @@ import PersonalProfile from '../components/PersonalProfile.vue';
 import { NAV_HEIGHT } from '../config/constants';
 import MarkdownRenderer from '../components/MarkdownRenderer.vue';
 import TableOfContents from '../components/TableOfContents.vue';
+import { currentLang } from '../utils/i18n';
+
+const markdownContent = ref('');
+
+const fetchCV = async () => {
+    // 按优先级尝试请求特定语言的 Markdown 文件
+    const langFallback = currentLang.value === 'zh-TW' ? 'zh-CN' : null;
+    const urls = [
+        `/api/static/cv/cv.${currentLang.value}.md`,
+        langFallback ? `/api/static/cv/cv.${langFallback}.md` : null,
+        `/api/static/cv/cv.en.md`,
+        `/api/static/cv/cv.md`
+    ].filter(Boolean);
+    
+    for (const url of urls) {
+        try {
+            const res = await fetch(url);
+            if (res.ok) {
+                markdownContent.value = await res.text();
+                return; // 请求成功后直接退出
+            }
+        } catch (e) {
+            console.error('Fetch error:', e);
+        }
+    }
+};
+
+// 页面加载和语言切换时触发获取
+onMounted(fetchCV);
+watch(currentLang, fetchCV);
 </script>
 
 <style scoped>

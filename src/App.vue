@@ -8,10 +8,11 @@
 </template>
 
 <script setup>
-import { onMounted } from 'vue'
+import { onMounted, watchEffect } from 'vue'
 import NavBar from './components/NavBar.vue'
 import '@fontsource-variable/noto-sans-sc'
 import yaml from 'js-yaml'
+import { getLocalized } from './utils/i18n'
 
 
 const fetchSiteInfo = async () => {
@@ -21,11 +22,15 @@ const fetchSiteInfo = async () => {
     const data = yaml.load(text)
     
     if (data.site_name) {
-      document.title = data.site_name
+      watchEffect(() => {
+        document.title = getLocalized(data.site_name)
+      })
     }
 
     if (data.site_desc) {
-      updateMetaDescription(data.site_desc)
+      watchEffect(() => {
+        updateMetaDescription(getLocalized(data.site_desc))
+      })
     }
     
   } catch (error) {

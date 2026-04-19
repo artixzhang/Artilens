@@ -17,7 +17,7 @@
                 
                 <!-- 标题信息区域 -->
                 <section class="project-header">
-                    <h1 class="project-title">{{ obj.name }}</h1>
+                    <h1 class="project-title">{{ getLocalized(obj.name) }}</h1>
                     <div class="project-meta-row">
                         <span class="meta-item">Created Date: {{ formatDate(obj.dateCreated) }}</span>
                         <span class="meta-item">Author: {{ obj.author }}</span>
@@ -54,7 +54,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import PageFooter from '../components/PageFooter.vue'
 import MiniTag from '../components/MiniTag.vue'
@@ -62,13 +62,14 @@ import BackTop from '../components/BackTop.vue'
 import MarkdownRenderer from '../components/MarkdownRenderer.vue'
 import TableOfContents from '../components/TableOfContents.vue'
 import { NAV_HEIGHT } from '../config/constants'
+import { getLocalized, currentLang } from '../utils/i18n'
 
 const route = useRoute()
 const obj = ref(null)
 const tagsDict = ref([])
 const loading = ref(true)
 
-const getTagName = (id) => tagsDict.value.find(t => t.id === id)?.name || id
+const getTagName = (id) => getLocalized(tagsDict.value.find(t => t.id === id)?.name) || id
 const formatDate = (iso) => iso ? new Date(iso).toLocaleDateString() : 'Unknown'
 
 const fetchData = async () => {
@@ -78,7 +79,7 @@ const fetchData = async () => {
         const headers = token ? { 'Authorization': `Bearer ${token}` } : {}
         
         const [objRes, tagRes] = await Promise.all([
-            fetch(`/api/objects/${id}`, { headers }),
+            fetch(`/api/objects/${id}?lang=${currentLang.value}`, { headers }),
             fetch('/api/tags/list')
         ])
         
@@ -99,6 +100,7 @@ const fetchData = async () => {
 }
 
 onMounted(fetchData)
+watch(currentLang, fetchData)
 </script>
 
 <style scoped>

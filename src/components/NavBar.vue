@@ -16,7 +16,7 @@
                         <div class="nav-item-top" @click="handleItemClick(item)">
                             <!-- Case 1: Logo -->
                             <router-link v-if="item.label === 'logo'" :to="item.path" class="nav-search-logo" @click.native="closeMenu">
-                                {{ item.name }}
+                                {{ getLocalized(item.name) }}
                             </router-link>
 
                             <!-- Case 2: Has Icon -->
@@ -28,15 +28,21 @@
                                     class="nav-avatar"
                                 />
                                 <img 
+                                    v-else-if="item.label === 'language'" 
+                                    :src="item.icon" 
+                                    :alt="getLocalized(item.name)"
+                                    class="nav-icon lang-icon"
+                                />
+                                <img 
                                     v-else 
                                     :src="item.icon" 
-                                    :alt="item.name"
+                                    :alt="getLocalized(item.name)"
                                     class="nav-icon"
                                 />
                             </router-link>
 
                             <!-- Case 3: Normal Title -->
-                            <router-link v-else :to="item.path" class="nav-title" @click.native="closeMenu">{{ item.name }}</router-link>
+                            <router-link v-else :to="item.path" class="nav-title" @click.native="closeMenu">{{ getLocalized(item.name) }}</router-link>
                         </div>
                     </li>
                 </ul>
@@ -47,17 +53,20 @@
                 <div v-if="isHovered && hoveredItem?.children?.length" class="navbar-dropdown">
                     <div class="dropdown-inner">
                         <div class="dropdown-column">
-                            <span v-if="hoveredItem.label === 'object'" class="column-label">{{ `Explore ${hoveredItem.name}` }}</span>
+                            <span v-if="hoveredItem.label === 'object'" class="column-label">{{ `${t('nav.explore')} ${getLocalized(hoveredItem.name)}` }}</span>
                             <ul>
                                 <li v-for="child in hoveredItem.children" :key="child.path" class="dropdown-li-link-wrapper">
-                                    <router-link :to="child.path" class="dropdown-link" @click.native="closeMenu">
-                                        {{ child.name }}
+                                    <router-link v-if="!child.action" :to="child.path" class="dropdown-link" @click.native="closeMenu">
+                                        {{ getLocalized(child.name) }}
                                     </router-link>
+                                    <a v-else href="#" class="dropdown-link" @click.prevent="child.action(); closeMenu()">
+                                        {{ getLocalized(child.name) }}
+                                    </a>
                                 </li>
                             </ul>
                         </div>
                         <div class="dropdown-desc">
-                            {{ hoveredItem.desc }}
+                            {{ getLocalized(hoveredItem.desc) }}
                         </div>
                     </div>
                 </div>
@@ -79,6 +88,7 @@ import { useRouter } from 'vue-router'
 import gsap from 'gsap'
 import yaml from 'js-yaml'
 import { NAV_HEIGHT } from '../config/constants'
+import { currentLang, setLanguage, t, getLocalized } from '../utils/i18n'
 
 const router = useRouter()
 const isHovered = ref(false)
@@ -105,7 +115,7 @@ const isLoggedIn = computed(() => {
 })
 
 const displayMenuItems = computed(() => {
-    return menuItems.value.map(item => {
+    const items = menuItems.value.map(item => {
         if (item.label === 'account') {
             const children = [...(item.children || [])]
             
@@ -117,20 +127,42 @@ const displayMenuItems = computed(() => {
 
             // Add Admin if admin
             if (isAdmin.value) {
-                children.push({ name: 'Admin Console', path: '/admin/objects' })
+                children.push({ name: computed(() => t('nav.admin_console')), path: '/admin/objects' })
             }
 
             // Add Logout if logged in
             if (isLoggedIn.value) {
-                children.push({ name: 'Log Out', path: '/logout' })
+                children.push({ name: computed(() => t('nav.log_out')), path: '/logout' })
             } else if (loginIndex === -1) {
-                children.push({ name: 'Log In', path: '/login' })
+                children.push({ name: computed(() => t('nav.log_in')), path: '/login' })
             }
 
             return { ...item, children }
         }
         return item
     })
+
+    // Insert Language Switcher before Account Avatar
+    const accountIndex = items.findIndex(i => i.label === 'account')
+    const langItem = {
+        label: 'language',
+        name: 'Language',
+        icon: '/api/static/site/icons/translate.svg',
+        path: '#',
+        children: [
+            { name: { value: 'English' }, path: '#en', lang: 'en', action: () => setLanguage('en') },
+            { name: { value: '简体中文' }, path: '#zh-CN', lang: 'zh-CN', action: () => setLanguage('zh-CN') },
+            { name: { value: '繁體中文' }, path: '#zh-TW', lang: 'zh-TW', action: () => setLanguage('zh-TW') }
+        ]
+    }
+
+    if (accountIndex !== -1) {
+        items.splice(accountIndex, 0, langItem)
+    } else {
+        items.push(langItem)
+    }
+
+    return items
 })
 
 // [NEW] 更新认证状态方法
@@ -148,24 +180,17 @@ const fetchNavData = async () => {
         const items = []
         
         // Items from YAML (including logo, avatar, search, and other menu items)
-        if (data.items) {
+        if (data && data.items) {
             data.items.forEach(item => {
-                items.push({
-                    name: item.name,
-                    path: item.path,
-                    icon: item.icon || null,
-                    label: item.label || null,
-                    desc: item.desc || '',
-                    children: item.subitems ? item.subitems.map(sub => ({
-                        name: sub.name,
-                        path: sub.path
-                    })) : []
-                })
+                // If item has subitems, pass them as children
+                if (item.subitems) {
+                    item.children = item.subitems
+                }
+                items.push(item)
             })
         }
-
+        
         menuItems.value = items
-
     } catch (error) {
         console.error('Error fetching navbar configuration:', error)
     }
@@ -378,8 +403,14 @@ watch([isHovered, hoveredItem], async () => {
     display: block;
 }
 
+.lang-icon {
+    height: 14px;
+    width: 14px;
+}
+
 .nav-search-logo { cursor: pointer; font-size: 12px; font-weight: 700; text-decoration: none; color: inherit; }
-.dropdown-link { color: inherit; text-decoration: none; display: block; width: 100%; }
+.dropdown-link { color: inherit; text-decoration: none; display: block; width: 100%; position: relative; }
+
 
 .nav-avatar {
     cursor: pointer;

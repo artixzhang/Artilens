@@ -42,14 +42,14 @@
       <div v-if="selectedTags.length > 0" class="selected-tags-stack">
         <transition-group name="list-vertical">
           <span v-for="tid in selectedTags" :key="tid" class="tag-pill active" @click="toggleTag(tid)">
-            {{ getTagName(tid) }} <span class="close-icon">×</span>
+            {{ getLocalized(getTagName(tid)) }} <span class="close-icon">×</span>
           </span>
         </transition-group>
 
         <!-- Limit Toast Notification -->
         <transition name="fade">
           <div v-if="showLimitToast" class="limit-toast">
-            <span>Maximum 7 tags allowed</span>
+            <span>{{ t('search.maximum_tags_allowed') }}</span>
           </div>
         </transition>
       </div>
@@ -75,15 +75,15 @@
             <div class="drawer-scroll-area">
               <div class="tags-flex-grid">
                 <div v-for="tag in unselectedTags" :key="tag.id" class="tag-pill normal" @click.stop="toggleTag(tag.id)">
-                  {{ tag.name }} <span class="count">{{ tag.count }}</span>
+                  {{ getLocalized(tag.name) }} <span class="count">{{ tag.count }}</span>
                 </div>
               </div>
             </div>
             
             <div class="drawer-bottom-bar">
-              <span v-if="selectedTags.length === 0">All Tags ({{ unselectedTags.length }})</span>
+              <span v-if="selectedTags.length === 0">{{ t('search.all_tags') }} ({{ unselectedTags.length }})</span>
               <span v-else class="clear-btn" @click.stop="selectedTags = []">
-                Clear Selection
+                {{ t('search.clear_selection') }}
               </span>
             </div>
           </div>
@@ -108,7 +108,7 @@
           <div class="search-input-area">
             <input 
               v-model="searchQuery" 
-              placeholder="Search..." 
+              :placeholder="t('search.placeholder_short')" 
               ref="searchInput"
               :class="{ visible: isSearchExpanded }"
             />
@@ -130,10 +130,10 @@
             <div class="results-inner-padding">
               <div v-if="tagSuggestions.length > 0" class="tags-flex-grid">
                 <div v-for="tag in tagSuggestions" :key="tag.id" class="tag-pill normal" @click="toggleTag(tag.id)">
-                  {{ tag.name }}
+                  {{ getLocalized(tag.name) }}
                 </div>
               </div>
-              <div v-else class="no-results">No matching tags</div>
+              <div v-else class="no-results">{{ t('search.no_matching_tags') }}</div>
             </div>
           </div>
         </div>
@@ -148,6 +148,7 @@ import { useRouter, useRoute } from 'vue-router'
 import ObjectProfile from '../components/ObjectProfile.vue' 
 import PageFooter from '../components/PageFooter.vue'
 import { NAV_HEIGHT } from '../config/constants'
+import { getLocalized, t } from '../utils/i18n'
 import BackTop from '../components/BackTop.vue'
 import DynamicWave from '../components/DynamicWave.vue'
 import SortControl from '../components/SortControl.vue' // Import SortControl
@@ -180,7 +181,19 @@ const filteredObjects = computed(() => {
   let list = allObjects.value.filter(obj => {
     if (props.type && props.type !== 'all' && obj.type !== props.type) return false
     const q = searchQuery.value.toLowerCase()
-    const matchText = obj.name.toLowerCase().includes(q) || (obj.description && obj.description.toLowerCase().includes(q))
+    
+    // Support searching via both en and zh-CN names and descriptions
+    const getNameString = (name) => {
+        if (typeof name === 'string') return name.toLowerCase()
+        if (name && typeof name === 'object') {
+            return (name.en + ' ' + name['zh-CN']).toLowerCase()
+        }
+        return ''
+    }
+    const nameStr = getNameString(obj.name)
+    const descStr = obj.description ? getNameString(obj.description) : ''
+    
+    const matchText = nameStr.includes(q) || descStr.includes(q)
     const matchTags = selectedTags.value.every(tid => obj.tags && obj.tags.includes(tid))
     return matchText && matchTags
   })
@@ -249,43 +262,67 @@ const init = async () => {
   isInitializing.value = false
 }
 
+let isApplyingUrlParams = false
+
 const applyUrlParams = () => {
+  isApplyingUrlParams = true
   // 1. Tags
   const tagParam = route.query.tag
   if (tagParam) {
     const tagNames = tagParam.split(',')
     const tagNamesLower = tagNames.map(n => n.toLowerCase())
     selectedTags.value = allTags.value
-      .filter(t => tagNamesLower.includes(t.name.toLowerCase()))
+      .filter(t => tagNamesLower.includes(getLocalized(t.name).toLowerCase()))
       .map(t => t.id)
   } else {
     selectedTags.value = []
   }
 
   // 2. Search Query
-  if (route.query.q) searchQuery.value = route.query.q
+  if (route.query.q) {
+      searchQuery.value = route.query.q
+  } else {
+      searchQuery.value = ''
+  }
 
   // 3. Sort State
   if (route.query.sort) {
     const [field, order] = route.query.sort.split(':')
     sortState.value = { field, order }
+  } else {
+    sortState.value = { field: 'date', order: 'desc' }
   }
+  
+  nextTick(() => {
+      isApplyingUrlParams = false
+  })
 }
+
+// 监听 URL 变化并同步到状态
+watch(() => route.query, () => {
+  if (isInitializing.value || isSyncingToUrl) return
+  applyUrlParams()
+}, { deep: true })
+
+let isSyncingToUrl = false
 
 // 监听状态变化并同步到 URL
 watch([searchQuery, selectedTags, sortState], () => {
-  if (isInitializing.value) return
+  if (isInitializing.value || isApplyingUrlParams) return
 
   const query = {}
   if (searchQuery.value) query.q = searchQuery.value
   if (selectedTags.value.length > 0) {
-    query.tag = selectedTags.value.map(id => getTagName(id)).filter(Boolean).join(',')
+    query.tag = selectedTags.value.map(id => getLocalized(getTagName(id))).filter(Boolean).join(',')
   }
   if (sortState.value.field !== 'date' || sortState.value.order !== 'desc') {
     query.sort = `${sortState.value.field}:${sortState.value.order}`
   }
   
-  router.replace({ query })
+  isSyncingToUrl = true
+  router.replace({ query }).finally(() => {
+    isSyncingToUrl = false
+  })
 }, { deep: true })
 
 // 离开页面前记录滚动位置

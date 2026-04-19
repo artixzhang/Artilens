@@ -6,7 +6,7 @@
       </div>
       <button class="btn-create" @click="handleCreate">
         <svg viewBox="0 0 24 24" class="plus-svg"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
-        New Object
+        {{ t('admin.create_object') }}
       </button>
     </div>
 
@@ -51,6 +51,7 @@ import { useRouter } from 'vue-router'
 import ObjectProfile from '../components/ObjectProfile.vue' 
 import ObjectEdit from '../components/ObjectEdit.vue'
 import SortControl from '../components/SortControl.vue'
+import { t } from '../utils/i18n'
 
 const router = useRouter()
 const allObjects = ref([])
@@ -64,7 +65,19 @@ const sortState = ref({ field: 'date', order: 'desc' })
 const filteredObjects = computed(() => {
   let list = allObjects.value.filter(obj => {
     const q = searchQuery.value.toLowerCase()
-    return obj.name.toLowerCase().includes(q) || (obj.description && obj.description.toLowerCase().includes(q))
+
+    // Support searching via both en and zh-CN names and descriptions
+    const getNameString = (name) => {
+        if (typeof name === 'string') return name.toLowerCase()
+        if (name && typeof name === 'object') {
+            return ((name.en || '') + ' ' + (name['zh-CN'] || '')).toLowerCase()
+        }
+        return ''
+    }
+    const nameStr = getNameString(obj.name)
+    const descStr = obj.description ? getNameString(obj.description) : ''
+
+    return nameStr.includes(q) || descStr.includes(q)
   })
 
   return list.sort((a, b) => {

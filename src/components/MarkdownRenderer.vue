@@ -9,6 +9,10 @@ import katex from '@traptitech/markdown-it-katex'
 import 'github-markdown-css/github-markdown-light.css'
 import hljs from 'highlight.js'
 import 'highlight.js/styles/monokai.css'
+import { currentLang } from '../utils/i18n'
+import * as OpenCC from 'opencc-js'
+
+const convertS2T = OpenCC.Converter({ from: 'cn', to: 'tw' })
 
 const props = defineProps({
     // 方式1：直接传入 Markdown 文本
@@ -74,7 +78,13 @@ const md = new MarkdownIt({
     }
 }).use(katex)
 
-const rawContent = computed(() => props.content || remoteContent.value || '')
+const rawContent = computed(() => {
+    let text = props.content || remoteContent.value || ''
+    if (currentLang.value === 'zh-TW') {
+        text = convertS2T(text)
+    }
+    return text
+})
 
 // 渲染 Markdown 并修复资源路径
 const renderedMarkdown = computed(() => {

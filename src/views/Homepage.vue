@@ -40,7 +40,7 @@
               />
             </div>
             <div class="card-info">
-              <span class="card-name">{{ card.name }}</span>
+              <span class="card-name">{{ getLocalized(card.name) }}</span>
             </div>
           </div>
         </div>
@@ -84,6 +84,7 @@ import { ref, computed, onMounted, onUnmounted, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
 import axios from 'axios'
 import ObjectProfile from '../components/ObjectProfile.vue'
+import { getLocalized } from '../utils/i18n'
 
 const router = useRouter()
 

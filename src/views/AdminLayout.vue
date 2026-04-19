@@ -2,11 +2,11 @@
   <div class="admin-layout">
     <div class="admin-container">
       <div class="admin-header">
-        <h1>Management Console</h1>
+        <h1>{{ t('nav.admin_console') }}</h1>
         <nav class="admin-tabs">
-          <router-link to="/admin/objects" class="tab-item" active-class="active">Objects</router-link>
-          <router-link to="/admin/users" class="tab-item" active-class="active">Users</router-link>
-          <router-link to="/admin/logs" class="tab-item" active-class="active">Access Logs</router-link>
+          <router-link to="/admin/objects" class="tab-item" active-class="active">{{ t('admin.objects') }}</router-link>
+          <router-link to="/admin/users" class="tab-item" active-class="active">{{ t('admin.users') }}</router-link>
+          <router-link to="/admin/logs" class="tab-item" active-class="active">{{ t('admin.access_logs') }}</router-link>
         </nav>
       </div>
       <div class="admin-content">
@@ -19,6 +19,7 @@
 
 <script setup>
 import PageFooter from '../components/PageFooter.vue'
+import { t } from '../utils/i18n'
 </script>
 
 <style scoped>

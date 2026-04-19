@@ -8,12 +8,12 @@
 
     <!-- 2. 名字 -->
     <div class="name-section">
-      {{ profile.name }}
+      {{ getLocalized(profile.name) }}
     </div>
 
     <!-- 3. Headline -->
     <div class="headline-section">
-      <div v-for="(line, index) in profile.headline" :key="index" class="headline-item">
+      <div v-for="(line, index) in getLocalizedArray(profile.headline)" :key="index" class="headline-item">
         {{ line }}
       </div>
     </div>
@@ -26,7 +26,7 @@
         <div class="capsule-icon-bg">
           <img :src="profile.location.icon" class="earth-icon-img" />
         </div>
-        <span class="location-text">{{ profile.location.value }}</span>
+        <span class="location-text">{{ getLocalized({ value: profile.location.value }) }}</span>
       </div>
 
       <!-- Email 图标 -->
@@ -58,6 +58,7 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import yaml from 'js-yaml'
+import { getLocalized, currentLang } from '../utils/i18n'
 
 const profile = ref({
   name: '',
@@ -67,6 +68,26 @@ const profile = ref({
   email: { url: '', icon: '' },
   social: {}
 })
+
+// Helper to reliably get the correct array from an i18n object or plain array
+const getLocalizedArray = (headlineObj) => {
+  if (!headlineObj) return []
+  if (Array.isArray(headlineObj)) return headlineObj // fallback for old format
+  
+  // Try to get the exact language array
+  const arr = headlineObj[currentLang.value]
+  if (Array.isArray(arr)) return arr
+  
+  // Fallback for zh-TW if only zh-CN exists (translating each string)
+  if (currentLang.value === 'zh-TW' && Array.isArray(headlineObj['zh-CN'])) {
+      return headlineObj['zh-CN'].map(item => getLocalized(item))
+  }
+  
+  // Fallback to English
+  if (Array.isArray(headlineObj['en'])) return headlineObj['en']
+  
+  return []
+}
 
 onMounted(async () => {
   try {

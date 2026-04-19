@@ -3,19 +3,19 @@
     <DynamicWave/>
     <div class="login-card">
       <div v-if="isFirstSetup">
-        <h2>Create Administrator</h2>
+        <h2>{{ t('login.create_admin') }}</h2>
         <div class="form-group">
           <input
             type="text"
             v-model="username"
-            placeholder="Username"
+            :placeholder="t('login.username')"
             @keydown.enter="e => !e.isComposing && handleFirstSetup()"
             class="login-input"
           />
           <input
             type="password"
             v-model="password"
-            placeholder="Password"
+            :placeholder="t('login.password')"
             @keydown.enter="e => !e.isComposing && handleFirstSetup()"
             ref="passwordInput"
             class="login-input"
@@ -23,44 +23,44 @@
           <input
             type="password"
             v-model="confirmPassword"
-            placeholder="Confirm Password"
+            :placeholder="t('login.password')"
             @keydown.enter="e => !e.isComposing && handleFirstSetup()"
             class="login-input"
           />
           <button @click="handleFirstSetup" :disabled="loading">
-            {{ loading ? 'Setting up...' : 'Create Administrator' }}
+            {{ loading ? t('login.setting_up') : t('login.create_admin') }}
           </button>
         </div>
       </div>
 
       <div v-else>
-        <h2>Log in</h2>
+        <h2>{{ t('login.login') }}</h2>
         <div v-if="!isLoggedIn" class="form-group">
           <input 
             type="text" 
             v-model="username" 
-            placeholder="Username" 
+            :placeholder="t('login.username')" 
             @keydown.enter="e => !e.isComposing && handleLogin()"
             class="login-input"
           />
           <input 
             type="password" 
             v-model="password" 
-            placeholder="Password" 
+            :placeholder="t('login.password')" 
             @keydown.enter="e => !e.isComposing && handleLogin()"
             ref="passwordInput"
             class="login-input"
           />
           <button @click="handleLogin" :disabled="loading">
-            {{ loading ? 'Verifying...' : 'Log in' }}
+            {{ loading ? 'Verifying...' : t('login.login') }}
           </button>
         </div>
 
         <div v-else class="action-group">
           <p class="status-text">Artifact Validated</p>
           <div class="buttons">
-            <button @click="goToAdmin">Go to Console</button>
-            <button @click="handleLogout" class="logout-btn">Logout</button>
+            <button @click="goToAdmin">{{ t('login.go_to_console') }}</button>
+            <button @click="handleLogout" class="logout-btn">{{ t('nav.log_out') }}</button>
           </div>
         </div>
       </div>
@@ -74,6 +74,7 @@
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import DynamicWave from '../components/DynamicWave.vue'
+import { t } from '../utils/i18n'
 
 const username = ref('')
 const password = ref('')

@@ -1,12 +1,13 @@
 <template>
     <footer class="page-footer">
-      <p>Copyright © {{ new Date().getFullYear() }} {{ siteName }}. All rights reserved.</p>
+      <p>{{ t('footer.copyright') }} © {{ new Date().getFullYear() }} {{ getLocalized(siteName) }}. {{ t('footer.all_rights_reserved') }}</p>
     </footer>
 </template>
 
 <script setup>
 import { ref, onMounted } from 'vue'
 import yaml from 'js-yaml'
+import { t, getLocalized } from '../utils/i18n'
 
 const siteName = ref('Artix Zhang')
 
