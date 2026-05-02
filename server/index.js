@@ -234,25 +234,126 @@ app.get('/api/check-auth', verifyToken, (req, res) => {
     res.json({ success: true, user: req.user });
 });
 
-// Admin endpoint to read current access logs
+// Helper to get log files in range
+function getLogFilesInRange(startDateStr, endDateStr, logDir) {
+    const files = [];
+    if (!fs.existsSync(logDir)) return files;
+    
+    const allFiles = fs.readdirSync(logDir).filter(f => f.startsWith('access-') && f.endsWith('.log'));
+    if (allFiles.length === 0) return files;
+
+    let startMonth = null;
+    let endMonth = null;
+    
+    if (startDateStr) startMonth = startDateStr.substring(0, 7);
+    if (endDateStr) endMonth = endDateStr.substring(0, 7);
+
+    return allFiles.filter(f => {
+        const month = f.replace('access-', '').replace('.log', '');
+        if (startMonth && month < startMonth) return false;
+        if (endMonth && month > endMonth) return false;
+        return true;
+    }).sort();
+}
+
+app.get('/api/admin/logs/regions', verifyToken, (req, res) => {
+    if (req.user.role !== 'admin') {
+        return res.status(403).json({ success: false, message: 'Admin access required' });
+    }
+    const logDir = path.join(DATA_PATH, 'logs');
+    if (!fs.existsSync(logDir)) return res.json([]);
+    
+    const regions = new Set();
+    const allFiles = fs.readdirSync(logDir).filter(f => f.startsWith('access-') && f.endsWith('.log'));
+    const rgx = /^\[(.*?)\] .*? \[(.*?)\]/;
+    
+    allFiles.forEach(file => {
+        const content = fs.readFileSync(path.join(logDir, file), 'utf8');
+        const lines = content.split('\n');
+        for (const line of lines) {
+            if (!line.trim()) continue;
+            const match = line.match(rgx);
+            if (match && match[2] && match[2] !== 'Unknown') {
+                regions.add(match[2]);
+            }
+        }
+    });
+    res.json(Array.from(regions).sort());
+});
+
 app.get('/api/admin/logs', verifyToken, (req, res) => {
     if (req.user.role !== 'admin') {
         return res.status(403).json({ success: false, message: 'Admin access required' });
     }
     
-    const timestamp = new Date().toISOString();
-    const monthStr = timestamp.substring(0, 7); 
-    const logFile = path.join(DATA_PATH, 'logs', `access-${monthStr}.log`);
+    const { timeRange, startDate, endDate, user, region } = req.query;
+    const logDir = path.join(DATA_PATH, 'logs');
     
-    if (fs.existsSync(logFile)) {
-        fs.readFile(logFile, 'utf8', (err, data) => {
-            if (err) return res.status(500).send('Failed to read log file.');
-            res.header('Content-Type', 'text/plain');
-            res.send(data);
-        });
+    let start = null;
+    let end = null;
+    const now = new Date();
+    
+    if (timeRange === '1d') {
+        start = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+    } else if (timeRange === '7d') {
+        start = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+    } else if (timeRange === '30d') {
+        start = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+    } else if (timeRange === 'custom') {
+        if (startDate) start = new Date(startDate);
+        if (endDate) {
+            end = new Date(endDate);
+            end.setHours(23, 59, 59, 999);
+        }
+    } else if (!timeRange) {
+        // default to 7 days if not provided
+        start = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+    }
+
+    const startStr = start ? start.toISOString() : null;
+    const endStr = end ? end.toISOString() : null;
+    
+    const filesToRead = getLogFilesInRange(startStr, endStr, logDir);
+    
+    let filteredLogs = [];
+    const rgx = /^\[(.*?)\] .*? \[(.*?)\] .*? \[User: (.*?)\]/;
+    
+    for (const file of filesToRead) {
+        const filePath = path.join(logDir, file);
+        if (fs.existsSync(filePath)) {
+            const content = fs.readFileSync(filePath, 'utf8');
+            const lines = content.split('\n');
+            for (const line of lines) {
+                if (!line.trim()) continue;
+                
+                let includeLine = true;
+                const match = line.match(rgx);
+                if (match) {
+                    const logDateStr = match[1];
+                    const logRegion = match[2];
+                    const logUser = match[3];
+                    
+                    if (startStr && logDateStr < startStr) includeLine = false;
+                    if (endStr && logDateStr > endStr) includeLine = false;
+                    if (region && region !== 'all' && logRegion !== region) includeLine = false;
+                    if (user && user !== 'all' && logUser !== user) includeLine = false;
+                } else {
+                    if (user && user !== 'all') includeLine = false;
+                    if (region && region !== 'all') includeLine = false;
+                }
+                
+                if (includeLine) {
+                    filteredLogs.push(line);
+                }
+            }
+        }
+    }
+    
+    res.header('Content-Type', 'text/plain');
+    if (filteredLogs.length > 0) {
+        res.send(filteredLogs.join('\n'));
     } else {
-        res.header('Content-Type', 'text/plain');
-        res.send("No access logs generated for this month yet.");
+        res.send("No logs found for the given criteria.");
     }
 });
 
